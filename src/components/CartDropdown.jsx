@@ -15,7 +15,9 @@ export const CartDropdown = ({
   onApplyDiscount,
   onClearDiscount,
 }) => {
-  const [step, setStep] = useState("cart"); // "cart" | "payment"
+  const [step, setStep] = useState("cart"); // "cart" | "shipping" | "payment"
+  const [shippingType, setShippingType] = useState("pickup"); // "pickup" | "delivery"
+  const [shippingAddress, setShippingAddress] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("receipt");
   const [receiptFile, setReceiptFile] = useState(null);
   const [receiptPreview, setReceiptPreview] = useState("");
@@ -25,6 +27,8 @@ export const CartDropdown = ({
 
   const handleClose = () => {
     setStep("cart");
+    setShippingType("pickup");
+    setShippingAddress("");
     setReceiptFile(null);
     setReceiptPreview("");
     setCouponInput("");
@@ -56,33 +60,39 @@ export const CartDropdown = ({
   };
 
   const handleFinalCheckout = async () => {
-    if (paymentMethod === "receipt" && !receiptFile) {
-      alert("Por favor sube tu comprobante de pago.");
-      return;
+    if (shippingType === "pickup") {
+      if (paymentMethod === "receipt" && !receiptFile) {
+        alert("Por favor sube tu comprobante de pago.");
+        return;
+      }
     }
-    
+
     setIsUploading(true);
     try {
       let receiptUrl = null;
-      if (paymentMethod === "receipt") {
+      if (shippingType === "pickup" && paymentMethod === "receipt" && receiptFile) {
         const res = await api.upload(receiptFile, 'receipt');
         receiptUrl = res.url;
       }
-      
+
       await onCheckout({
-        payment_method: paymentMethod,
+        payment_method: shippingType === "pickup" ? paymentMethod : "pending",
         payment_receipt_url: receiptUrl,
         paypal_order_id:
-          paymentMethod === "paypal"
+          shippingType === "pickup" && paymentMethod === "paypal"
             ? "MOCK_PAYPAL_" + Math.random().toString(36).substr(2, 9)
             : null,
+        shipping_type: shippingType,
+        shipping_address: shippingType === "delivery" ? shippingAddress : null,
       });
-      // Reset after checkout attempt
+
       setStep("cart");
+      setShippingType("pickup");
+      setShippingAddress("");
       setReceiptFile(null);
       setReceiptPreview("");
     } catch (e) {
-      alert("Error al procesar el pago: " + e.message);
+      alert("Error al procesar el pedido: " + e.message);
     } finally {
       setIsUploading(false);
     }
@@ -109,7 +119,9 @@ export const CartDropdown = ({
           >
             <div className="p-6 border-b flex justify-between items-center">
               <h2 className="text-xl font-serif font-bold">
-                {step === "cart" ? "Carrito de Pedido" : "Método de Pago"}
+                {step === "cart" && "Carrito de Pedido"}
+                {step === "shipping" && "Método de Entrega"}
+                {step === "payment" && "Método de Pago"}
               </h2>
               <button
                 onClick={handleClose}
@@ -119,7 +131,7 @@ export const CartDropdown = ({
               </button>
             </div>
 
-            {step === "cart" ? (
+            {step === "cart" && (
               <>
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
                   {items.length === 0 ? (
@@ -210,14 +222,98 @@ export const CartDropdown = ({
                   </div>
                   <button
                     disabled={items.length === 0}
-                    onClick={() => setStep("payment")}
+                    onClick={() => setStep("shipping")}
                     className="w-full bg-brand-primary text-white py-4 rounded-xl font-bold tracking-tight hover:bg-brand-accent disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                   >
-                    Proceder al Pago <ChevronRight size={18} />
+                    Continuar <ChevronRight size={18} />
                   </button>
                 </div>
               </>
-            ) : (
+            )}
+
+            {step === "shipping" && (
+              <>
+                <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                  <p className="text-sm text-gray-500 font-medium">
+                    ¿Cómo deseas recibir tu pedido?
+                  </p>
+
+                  <div className="space-y-4">
+                    <label className="flex items-center gap-3 p-4 border rounded-xl cursor-pointer hover:bg-paper transition-colors">
+                      <input
+                        type="radio"
+                        name="shippingType"
+                        value="pickup"
+                        checked={shippingType === "pickup"}
+                        onChange={(e) => setShippingType(e.target.value)}
+                        className="w-5 h-5 accent-brand-accent"
+                      />
+                      <div>
+                        <span className="font-bold block text-sm">Retirar en Tienda</span>
+                        <span className="text-xs text-gray-400">Gratis - Te esperamos en nuestro local</span>
+                      </div>
+                    </label>
+
+                    <label className="flex items-center gap-3 p-4 border rounded-xl cursor-pointer hover:bg-paper transition-colors">
+                      <input
+                        type="radio"
+                        name="shippingType"
+                        value="delivery"
+                        checked={shippingType === "delivery"}
+                        onChange={(e) => setShippingType(e.target.value)}
+                        className="w-5 h-5 accent-brand-accent"
+                      />
+                      <div>
+                        <span className="font-bold block text-sm">Envío a Domicilio (Delivery)</span>
+                        <span className="text-xs text-gray-400">Cálculo posterior por el administrador</span>
+                      </div>
+                    </label>
+
+                    {shippingType === "delivery" && (
+                      <div className="space-y-2 animate-in slide-in-from-top-2">
+                        <label className="text-xs font-bold uppercase tracking-wider text-gray-400 block">
+                          Dirección Exacta de Entrega
+                        </label>
+                        <textarea
+                          value={shippingAddress}
+                          onChange={(e) => setShippingAddress(e.target.value)}
+                          placeholder="Escribe calle, número de casa, puntos de referencia..."
+                          rows={3}
+                          className="w-full p-3 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent/40"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="p-6 border-t bg-paper/50 space-y-4">
+                  <button
+                    onClick={() => {
+                      if (shippingType === "delivery" && !shippingAddress.trim()) {
+                        alert("Por favor ingresa tu dirección exacta.");
+                        return;
+                      }
+                      if (shippingType === "delivery") {
+                        handleFinalCheckout();
+                      } else {
+                        setStep("payment");
+                      }
+                    }}
+                    className="w-full bg-brand-primary text-white py-4 rounded-xl font-bold tracking-tight hover:bg-brand-accent transition-all flex items-center justify-center gap-2"
+                  >
+                    {shippingType === "delivery" ? "Confirmar Pedido" : "Proceder al Pago"} <ChevronRight size={18} />
+                  </button>
+                  <button
+                    onClick={() => setStep("cart")}
+                    className="w-full text-center text-sm font-bold text-gray-400 hover:text-brand-primary"
+                  >
+                    Volver al Carrito
+                  </button>
+                </div>
+              </>
+            )}
+
+            {step === "payment" && (
               <>
                 {/* Payment Step */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
@@ -301,10 +397,10 @@ export const CartDropdown = ({
                     {isUploading ? "Procesando..." : paymentMethod === "paypal" ? "Pagar con PayPal" : "Enviar Pedido"}
                   </button>
                   <button
-                    onClick={() => setStep("cart")}
+                    onClick={() => setStep("shipping")}
                     className="w-full text-center text-sm font-bold text-gray-400 hover:text-brand-primary"
                   >
-                    Volver al Carrito
+                    Volver a Entrega
                   </button>
                 </div>
               </>

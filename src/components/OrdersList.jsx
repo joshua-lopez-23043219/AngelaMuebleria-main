@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { X } from "lucide-react";
-import { useOrders } from "../hooks/useOrders"; // Use the new hook
+import { X, Upload, CreditCard } from "lucide-react";
+import { useOrders } from "../hooks/useOrders";
+import { api } from "../services/api"; // Use the new hook
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -14,6 +15,50 @@ export const OrdersList = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [items, setItems] = useState([]);
   const [loadingItems, setLoadingItems] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("receipt");
+  const [receiptFile, setReceiptFile] = useState(null);
+  const [receiptPreview, setReceiptPreview] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setReceiptFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setReceiptPreview(reader.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handlePayDeliveryOrder = async () => {
+    if (paymentMethod === "receipt" && !receiptFile) {
+      alert("Por favor sube tu comprobante de pago.");
+      return;
+    }
+    setIsUploading(true);
+    try {
+      let receiptUrl = null;
+      if (paymentMethod === "receipt") {
+        const res = await api.upload(receiptFile, 'receipt');
+        receiptUrl = res.url;
+      }
+      await api.orders.payOrder(selectedOrder.id, {
+        payment_method: paymentMethod,
+        payment_receipt_url: receiptUrl,
+        paypal_order_id:
+          paymentMethod === "paypal"
+            ? "MOCK_PAYPAL_" + Math.random().toString(36).substr(2, 9)
+            : null,
+      });
+      alert("¡Pago enviado correctamente! Espera la validación del administrador.");
+      setSelectedOrder(null);
+      ordersApi.refresh();
+    } catch (e) {
+      alert("Error al procesar el pago: " + e.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const viewDetails = async (order) => {
     setSelectedOrder(order);
@@ -154,12 +199,79 @@ export const OrdersList = () => {
                   )}
                 </div>
 
+                {selectedOrder.shipping_type === 'delivery' && (
+                  <div className="p-4 bg-paper rounded-2xl border border-brand-accent/10 text-sm space-y-1">
+                    <p className="font-bold text-gray-700">🚚 Envío a Domicilio</p>
+                    <p className="text-gray-500 text-xs"><span className="font-bold">Dirección:</span> {selectedOrder.shipping_address}</p>
+                    <p className="text-brand-accent font-bold text-xs mt-1">
+                      Costo Delivery: {selectedOrder.shipping_cost > 0 ? `$${selectedOrder.shipping_cost.toLocaleString()}` : '🕐 Pendiente de cotización por el administrador.'}
+                    </p>
+                  </div>
+                )}
+
+                {selectedOrder.shipping_type === 'delivery' && selectedOrder.shipping_cost > 0 && selectedOrder.payment_method === 'pending' && (
+                  <div className="p-4 border border-brand-accent/20 rounded-2xl bg-white space-y-4 animate-in slide-in-from-top-2">
+                    <p className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                      Pagar Pedido + Delivery (Total: ${(selectedOrder.total + selectedOrder.shipping_cost).toLocaleString()})
+                    </p>
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2 p-2 border rounded-xl cursor-pointer text-xs">
+                        <input
+                          type="radio"
+                          name="payMethod"
+                          value="receipt"
+                          checked={paymentMethod === "receipt"}
+                          onChange={(e) => setPaymentMethod(e.target.value)}
+                          className="accent-brand-accent"
+                        />
+                        <Upload size={16} className="text-brand-accent" />
+                        Subir Comprobante
+                      </label>
+
+                      {paymentMethod === "receipt" && (
+                        <div className="pl-6 space-y-2 animate-in slide-in-from-top-1">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileUpload}
+                            className="text-xs w-full file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-brand-accent/10 file:text-brand-accent cursor-pointer"
+                          />
+                          {receiptPreview && (
+                            <img src={receiptPreview} className="w-full h-24 object-cover rounded-lg" />
+                          )}
+                        </div>
+                      )}
+
+                      <label className="flex items-center gap-2 p-2 border rounded-xl cursor-pointer text-xs">
+                        <input
+                          type="radio"
+                          name="payMethod"
+                          value="paypal"
+                          checked={paymentMethod === "paypal"}
+                          onChange={(e) => setPaymentMethod(e.target.value)}
+                          className="accent-brand-accent"
+                        />
+                        <CreditCard size={16} className="text-blue-600" />
+                        PayPal
+                      </label>
+                    </div>
+
+                    <button
+                      onClick={handlePayDeliveryOrder}
+                      disabled={isUploading}
+                      className="w-full bg-brand-accent text-white py-2.5 rounded-xl text-xs font-bold hover:bg-yellow-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {isUploading ? "Procesando..." : "Enviar Pago de Pedido"}
+                    </button>
+                  </div>
+                )}
+
                 <div className="pt-4 border-t border-dashed flex justify-between items-end">
                   <p className="text-sm font-serif italic text-gray-500">
-                    Subtotal
+                    Subtotal {selectedOrder.shipping_type === 'delivery' && selectedOrder.shipping_cost > 0 && '+ Delivery'}
                   </p>
                   <p className="text-2xl font-serif font-bold text-brand-primary">
-                    ${selectedOrder.total.toLocaleString()}
+                    ${(selectedOrder.total + (selectedOrder.shipping_cost || 0)).toLocaleString()}
                   </p>
                 </div>
 

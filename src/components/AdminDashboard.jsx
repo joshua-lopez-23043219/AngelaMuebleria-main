@@ -32,6 +32,7 @@ export const AdminDashboard = () => {
 
   const [customFurnitures, setCustomFurnitures] = useState([]);
   const [customColors, setCustomColors] = useState([]);
+  const [shippingCosts, setShippingCosts] = useState({});
 
   const loadCustomizations = async () => {
     try {
@@ -54,6 +55,21 @@ export const AdminDashboard = () => {
       alert(e.message);
     } finally {
       setLoadingItems(false);
+    }
+  };
+
+  const handleSetShippingCost = async (id) => {
+    const cost = shippingCosts[id];
+    if (cost === undefined || cost === "") {
+      alert("Ingresa un monto válido para el Delivery.");
+      return;
+    }
+    try {
+      await api.orders.adminSetShippingCost(id, Number(cost));
+      alert("Costo de Delivery asignado exitosamente.");
+      admin.refresh();
+    } catch (e) {
+      alert(e.message);
     }
   };
 
@@ -319,6 +335,37 @@ export const AdminDashboard = () => {
                             <p className="text-[9px] text-gray-500 font-medium">
                               📍 {o.user_department}, {o.user_municipality}
                             </p>
+                            <div className="mt-2 p-2 bg-paper rounded-lg border border-brand-accent/5 text-[10px] space-y-1">
+                              <span className="font-bold text-gray-600">
+                                {o.shipping_type === 'delivery' ? '🚚 ENVÍO A DOMICILIO' : '🏪 RETIRAR EN TIENDA'}
+                              </span>
+                              {o.shipping_type === 'delivery' && (
+                                <>
+                                  <p className="text-gray-500"><span className="font-bold">Dirección:</span> {o.shipping_address}</p>
+                                  <p className="text-brand-accent font-bold">
+                                    Costo Delivery: {o.shipping_cost > 0 ? `$${o.shipping_cost}` : 'No asignado'}
+                                  </p>
+                                  
+                                  {(!o.shipping_cost || o.shipping_cost === 0) && (
+                                    <div className="mt-2 flex gap-2 items-center">
+                                      <input 
+                                        type="number" 
+                                        placeholder="$ Delivery"
+                                        value={shippingCosts[o.id] || ""}
+                                        onChange={(e) => setShippingCosts(prev => ({...prev, [o.id]: e.target.value}))}
+                                        className="w-24 p-1 text-xs border rounded-md focus:outline-none focus:ring-1 focus:ring-brand-accent"
+                                      />
+                                      <button 
+                                        onClick={() => handleSetShippingCost(o.id)}
+                                        className="px-2 py-1 bg-brand-primary text-white font-bold rounded-md hover:bg-brand-accent transition-all"
+                                      >
+                                        Asignar
+                                      </button>
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                            </div>
                           </div>
                         </div>
                         <div className="text-right">

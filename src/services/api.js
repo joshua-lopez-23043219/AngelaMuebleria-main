@@ -54,6 +54,16 @@ export const api = {
         body: JSON.stringify({ status }),
       }),
     adminGetItems: (id) => api.fetch(`/admin/orders/${id}/items`),
+    adminSetShippingCost: (id, shipping_cost) =>
+      api.fetch(`/admin/orders/${id}/shipping`, {
+        method: "PATCH",
+        body: JSON.stringify({ shipping_cost }),
+      }),
+    payOrder: (id, data) =>
+      api.fetch(`/orders/${id}/payment`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      }),
   },
 
   admin: {

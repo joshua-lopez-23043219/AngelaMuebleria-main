@@ -84,6 +84,9 @@ db.exec(`
     payment_receipt_url TEXT,
     paypal_order_id TEXT,
     discount_code TEXT,
+    shipping_type TEXT DEFAULT 'pickup',
+    shipping_address TEXT,
+    shipping_cost REAL DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(user_id) REFERENCES users(id)
   );
@@ -100,12 +103,15 @@ db.exec(`
 `);
 
 // Safe migrations — add new columns only if they don't exist yet
-try { db.exec("ALTER TABLE orders ADD COLUMN payment_method TEXT DEFAULT 'receipt'"); } catch(e){}
-try { db.exec("ALTER TABLE orders ADD COLUMN payment_receipt_url TEXT"); } catch(e){}
-try { db.exec("ALTER TABLE orders ADD COLUMN paypal_order_id TEXT"); } catch(e){}
-try { db.exec("ALTER TABLE orders ADD COLUMN discount_code TEXT"); } catch(e){}
-try { db.exec("ALTER TABLE products ADD COLUMN wood_type TEXT"); } catch(e){}
-try { db.exec("ALTER TABLE custom_furnitures ADD COLUMN wood_type TEXT"); } catch(e){}
+try { db.exec("ALTER TABLE orders ADD COLUMN payment_method TEXT DEFAULT 'receipt'"); } catch (e) { }
+try { db.exec("ALTER TABLE orders ADD COLUMN payment_receipt_url TEXT"); } catch (e) { }
+try { db.exec("ALTER TABLE orders ADD COLUMN paypal_order_id TEXT"); } catch (e) { }
+try { db.exec("ALTER TABLE orders ADD COLUMN discount_code TEXT"); } catch (e) { }
+try { db.exec("ALTER TABLE orders ADD COLUMN shipping_type TEXT DEFAULT 'pickup'"); } catch (e) { }
+try { db.exec("ALTER TABLE orders ADD COLUMN shipping_address TEXT"); } catch (e) { }
+try { db.exec("ALTER TABLE orders ADD COLUMN shipping_cost REAL DEFAULT 0"); } catch (e) { }
+try { db.exec("ALTER TABLE products ADD COLUMN wood_type TEXT"); } catch (e) { }
+try { db.exec("ALTER TABLE custom_furnitures ADD COLUMN wood_type TEXT"); } catch (e) { }
 
 const seedCustomizations = () => {
   const furnCount = db.prepare("SELECT COUNT(*) as count FROM custom_furnitures").get();
@@ -117,7 +123,7 @@ const seedCustomizations = () => {
     ];
     const insertF = db.prepare("INSERT INTO custom_furnitures (name, base_price, image_url, wood_type) VALUES (?, ?, ?, ?)");
     furns.forEach(f => insertF.run(f.name, f.base_price, f.image_url, f.wood_type));
-    
+
     const colors = [
       { name: "Pintura Blanca", hex_code: "#f0f0f0", type: "paint", price_modifier: 0 },
       { name: "Pintura Negra", hex_code: "#1a1a1a", type: "paint", price_modifier: 100 },
@@ -481,11 +487,11 @@ async function startServer() {
 
   // Orders
   app.post("/api/orders", authMiddleware, (req, res) => {
-    const { items, total, payment_method, payment_receipt_url, paypal_order_id, discount_code } = req.body;
+    const { items, total, payment_method, payment_receipt_url, paypal_order_id, discount_code, shipping_type, shipping_address } = req.body;
     const transaction = db.transaction(() => {
       const orderResult = db
-        .prepare("INSERT INTO orders (user_id, total, payment_method, payment_receipt_url, paypal_order_id, discount_code) VALUES (?, ?, ?, ?, ?, ?)")
-        .run(req.user.id, total, payment_method, payment_receipt_url, paypal_order_id, discount_code);
+        .prepare("INSERT INTO orders (user_id, total, payment_method, payment_receipt_url, paypal_order_id, discount_code, shipping_type, shipping_address) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+        .run(req.user.id, total, payment_method, payment_receipt_url, paypal_order_id, discount_code, shipping_type || 'pickup', shipping_address || null);
       const orderId = orderResult.lastInsertRowid;
       for (const item of items) {
         db.prepare(
@@ -555,6 +561,9 @@ async function startServer() {
           orders.payment_receipt_url,
           orders.paypal_order_id,
           orders.created_at,
+          orders.shipping_type,
+          orders.shipping_address,
+          orders.shipping_cost,
           users.name as user_name,
           users.email as user_email,
           users.phone as user_phone,
@@ -597,19 +606,40 @@ async function startServer() {
     },
   );
 
+
+
+
+
+  // Admin assigns shipping cost
   app.patch(
-    "/api/admin/orders/:id/status",
+    "/api/admin/orders/:id/shipping",
     authMiddleware,
     adminMiddleware,
     (req, res) => {
-      const { status } = req.body;
-      const validStatuses = ['pending', 'payment_review', 'payment_validated', 'processing', 'delivered', 'cancelled'];
-      if (!validStatuses.includes(status)) {
-        return res.status(400).json({ error: 'Estado inválido' });
-      }
+      const { shipping_cost } = req.body;
       try {
-        db.prepare("UPDATE orders SET status = ? WHERE id = ?").run(
-          status,
+        db.prepare("UPDATE orders SET shipping_cost = ? WHERE id = ?").run(
+          Number(shipping_cost) || 0,
+          req.params.id,
+        );
+        res.json({ success: true });
+      } catch (e) {
+        res.status(500).json({ error: e.message });
+      }
+    },
+  );
+
+  // Customer pays for order (delivery flow or pickup update)
+  app.patch(
+    "/api/orders/:id/payment",
+    authMiddleware,
+    (req, res) => {
+      const { payment_method, payment_receipt_url, paypal_order_id } = req.body;
+      try {
+        db.prepare("UPDATE orders SET payment_method = ?, payment_receipt_url = ?, paypal_order_id = ?, status = 'payment_review' WHERE id = ?").run(
+          payment_method,
+          payment_receipt_url || null,
+          paypal_order_id || null,
           req.params.id,
         );
         res.json({ success: true });
@@ -622,24 +652,24 @@ async function startServer() {
   // Dashboard Stats
   app.get("/api/admin/stats", authMiddleware, adminMiddleware, (req, res) => {
     try {
-      const orders = db.prepare("SELECT total, status FROM orders").all();
+      const orders = db.prepare("SELECT total, status, shipping_cost FROM orders").all();
       const products = db.prepare("SELECT stock FROM products").all();
-      
+
       const totalSales = orders
         .filter(o => o.status !== 'cancelled')
-        .reduce((sum, o) => sum + (Number(o.total) || 0), 0);
-        
+        .reduce((sum, o) => sum + (Number(o.total) || 0) + (Number(o.shipping_cost) || 0), 0);
+
       const totalOrders = orders.length;
       const totalProducts = products.length;
       const lowStock = products.filter(p => (Number(p.stock) || 0) < 5).length;
-      
+
       const stats = {
         revenue: totalSales,
         orders: totalOrders,
         products: totalProducts,
         lowStock: lowStock
       };
-      
+
       res.json(stats);
     } catch (e) {
       console.error("Error generating stats:", e);
