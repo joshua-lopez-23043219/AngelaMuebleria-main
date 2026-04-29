@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-primary: #1a1a1a;
+  --color-brand-accent: #c5a059;
+  --color-paper: #f9f7f2;
+  --font-angela: "Great Vibes", cursive;
+  --font-muebleria: "Montserrat", sans-serif;
+}
+
+/* --- DISEÑO DE COMPONENTES (CSS SEPARADO) --- */
+
+.product-card {
+  @apply bg-white border border-brand-accent/10 p-4 rounded-xl transition-all duration-500 hover:shadow-2xl;
+}
+
+.product-image-container {
+  @apply aspect-square relative overflow-hidden rounded-lg bg-paper mb-4;
+}
+
+.btn-primary {
+  @apply bg-brand-primary text-white text-sm font-medium py-3 px-6 rounded-lg hover:bg-brand-accent transition-all disabled:opacity-50;
+}
+
+.btn-outline {
+  @apply border border-brand-accent/20 text-brand-primary py-2 px-4 rounded-lg hover:bg-paper transition-all;
+}
+
+.navbar-container {
+  @apply sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-brand-accent/20 px-6 py-4 flex justify-between items-center;
+}
+
+.modal-overlay {
+  @apply fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4;
+}
+
+.modal-content {
+  @apply relative bg-white w-full max-w-lg p-8 rounded-3xl shadow-2xl;
+}
+
+.input-field {
+  @apply w-full px-4 py-3 bg-paper rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-accent/50 transition-all;
+}
