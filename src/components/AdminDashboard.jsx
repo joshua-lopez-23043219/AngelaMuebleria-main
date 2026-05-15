@@ -600,14 +600,14 @@ export const AdminDashboard = () => {
               </h3>
               <form
                 onSubmit={handleProductSubmit}
-                className="grid grid-cols-2 gap-4"
+                className="grid grid-cols-1 sm:grid-cols-2 gap-4 overflow-y-auto max-h-[70vh] p-1"
               >
                 <input
                   required
                   name="name"
                   placeholder="Nombre"
                   defaultValue={editingProduct?.name}
-                  className="col-span-2 w-full px-4 py-2 border rounded-lg"
+                  className="sm:col-span-2 w-full px-4 py-2 border rounded-lg"
                 />
                 <input
                   required
@@ -629,7 +629,7 @@ export const AdminDashboard = () => {
                   name="description"
                   placeholder="Descripción"
                   defaultValue={editingProduct?.description}
-                  className="col-span-2 w-full px-4 py-2 border rounded-lg"
+                  className="sm:col-span-2 w-full px-4 py-2 border rounded-lg"
                   rows={3}
                 />
                 <input
@@ -644,7 +644,7 @@ export const AdminDashboard = () => {
                   defaultValue={editingProduct?.wood_type}
                   className="w-full px-4 py-2 border rounded-lg"
                 />
-                <div className="w-full">
+                <div className="sm:col-span-2 w-full">
                   <label className="text-[10px] text-gray-500 font-bold uppercase mb-1 block">Imagen del Producto</label>
                   <input
                     type="file"
@@ -673,7 +673,7 @@ export const AdminDashboard = () => {
                     />
                   </div>
                 </div>
-                <div className="col-span-2 flex gap-4 mt-4">
+                <div className="sm:col-span-2 flex flex-col sm:flex-row gap-4 mt-4">
                   <button
                     type="button"
                     onClick={() => setShowForm(false)}

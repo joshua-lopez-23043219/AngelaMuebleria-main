@@ -2,8 +2,24 @@ const API_BASE = import.meta.env.VITE_API_URL || "";
 
 const getImageUrl = (url) => {
   if (!url) return null;
-  if (url.startsWith("http")) return url;
-  return `${API_BASE}${url.startsWith("/") ? "" : "/"}${url}`;
+  
+  // Si la URL ya viene completa, forzamos HTTPS si la app está en HTTPS
+  if (url.startsWith("http")) {
+    if (window.location.protocol === "https:" && url.startsWith("http:")) {
+      return url.replace("http:", "https:");
+    }
+    return url;
+  }
+  
+  // Si la ruta es relativa, construimos la URL
+  let fullUrl = `${API_BASE}${url.startsWith("/") ? "" : "/"}${url}`;
+  
+  // Forzamos HTTPS si estamos en un sitio seguro y la API base tenía http://
+  if (window.location.protocol === "https:" && fullUrl.startsWith("http:")) {
+    fullUrl = fullUrl.replace("http:", "https:");
+  }
+  
+  return fullUrl;
 };
 
 const apiFetch = async (endpoint, options = {}) => {
