@@ -5,12 +5,19 @@ export function useAuth() {
 
   useEffect(() => {
     const savedUser = localStorage.getItem("muebleria_user");
-    if (savedUser) {
+    if (savedUser && savedUser !== "undefined") {
       try {
-        setUser(JSON.parse(savedUser));
+        const parsed = JSON.parse(savedUser);
+        if (parsed && typeof parsed === 'object') {
+          setUser(parsed);
+        }
       } catch (e) {
         console.error("Error parsing saved user", e);
+        localStorage.removeItem("muebleria_user");
+        localStorage.removeItem("muebleria_token");
       }
+    } else if (savedUser === "undefined") {
+      localStorage.removeItem("muebleria_user");
     }
   }, []);
 

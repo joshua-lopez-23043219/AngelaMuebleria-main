@@ -11,137 +11,46 @@ export const LoginPage = ({ onAuth }) => {
     password: "",
     phone: "",
     department: "Masaya",
-    municipality: "Masatepe",
+    municipalityId: "",
   });
   const [error, setError] = useState("");
 
-  const nicaraguaData = {
-    Boaco: [
-      "Boaco",
-      "Camoapa",
-      "San José de los Remates",
-      "San Lorenzo",
-      "Santa Lucía",
-      "Teustepe",
-    ],
-    Carazo: [
-      "Jinotepe",
-      "Diriamba",
-      "San Marcos",
-      "Dolores",
-      "El Rosario",
-      "La Paz de Carazo",
-      "Santa Teresa",
-      "La Conquista",
-    ],
-    Chinandega: [
-      "Chinandega",
-      "El Viejo",
-      "Corinto",
-      "Chichigalpa",
-      "Posoltega",
-      "Somotillo",
-      "Villa Nueva",
-    ],
-    Chontales: [
-      "Juigalpa",
-      "Acoyapa",
-      "Santo Tomás",
-      "La Libertad",
-      "San Pedro de Lóvago",
-    ],
-    Estelí: [
-      "Estelí",
-      "Condega",
-      "Pueblo Nuevo",
-      "La Trinidad",
-      "San Juan de Limay",
-    ],
-    Granada: ["Granada", "Nandaime", "Diriomo", "Diriá"],
-    Jinotega: [
-      "Jinotega",
-      "San Rafael del Norte",
-      "San Sebastián de Yalí",
-      "Wiwilí",
-      "El Cuá",
-    ],
-    León: [
-      "León",
-      "La Paz Centro",
-      "Nagarote",
-      "Telica",
-      "El Sauce",
-      "Larreynaga",
-    ],
-    Madriz: [
-      "Somoto",
-      "Totogalpa",
-      "Telpaneca",
-      "Palacagüina",
-      "Yalagüina",
-      "San Juan del Río Coco",
-    ],
-    Managua: [
-      "Managua",
-      "Ciudad Sandino",
-      "Tipitapa",
-      "Ticuantepe",
-      "San Rafael del Sur",
-      "Mateare",
-    ],
-    Masaya: [
-      "Masaya",
-      "Masatepe",
-      "Nindirí",
-      "La Concepción",
-      "Catarina",
-      "Niquinohomo",
-      "Nandasmo",
-      "Tisma",
-      "San Juan de Oriente",
-    ],
-    Matagalpa: [
-      "Matagalpa",
-      "Sébaco",
-      "Ciudad Darío",
-      "San Ramón",
-      "Matiguás",
-      "Muy Muy",
-    ],
-    "Nueva Segovia": ["Ocotal", "Jalapa", "Quilalí", "El Jícaro", "Dipilto"],
-    "Río San Juan": [
-      "San Carlos",
-      "San Miguelito",
-      "El Castillo",
-      "El Almendro",
-    ],
-    Rivas: [
-      "Rivas",
-      "San Juan del Sur",
-      "Tola",
-      "San Jorge",
-      "Moyogalpa",
-      "Altagracia",
-    ],
-    RACCN: ["Bilwi", "Waspam", "Siuna", "Rosita", "Bonanza"],
-    RACCS: [
-      "Bluefields",
-      "Nueva Guinea",
-      "El Rama",
-      "Muelle de los Bueyes",
-      "Corn Island",
-    ],
+  const [dbDepartments, setDbDepartments] = useState([]);
+  const [dbMunicipalities, setDbMunicipalities] = useState([]);
+  const [filteredMunicipalities, setFilteredMunicipalities] = useState([]);
+
+  React.useEffect(() => {
+    if (isRegister) {
+      const loadLocations = async () => {
+        try {
+          const depts = await api.locations.getDepartments();
+          const munis = await api.locations.getMunicipalities();
+          setDbDepartments(depts);
+          setDbMunicipalities(munis);
+          
+          if (depts.length > 0) {
+            updateSelection(depts[0].id, munis);
+          }
+        } catch (e) {
+          console.error("Error loading locations", e);
+        }
+      };
+      loadLocations();
+    }
+  }, [isRegister]);
+
+  const updateSelection = (deptId, allMunis) => {
+    const filtered = allMunis.filter(m => m.departamento === parseInt(deptId));
+    setFilteredMunicipalities(filtered);
+    setFormData(prev => ({
+      ...prev,
+      department: deptId,
+      municipalityId: filtered.length > 0 ? filtered[0].id : ""
+    }));
   };
 
-  const departments = Object.keys(nicaraguaData);
-
-  const handleDepartmentChange = (dept) => {
-    const municipalities = nicaraguaData[dept] || [];
-    setFormData({
-      ...formData,
-      department: dept,
-      municipality: municipalities[0] || "",
-    });
+  const handleDepartmentChange = (deptId) => {
+    updateSelection(deptId, dbMunicipalities);
   };
 
   const handleSubmit = async (e) => {
@@ -218,9 +127,9 @@ export const LoginPage = ({ onAuth }) => {
                   value={formData.department}
                   onChange={(e) => handleDepartmentChange(e.target.value)}
                 >
-                  {departments.map((dept) => (
-                    <option key={dept} value={dept}>
-                      {dept}
+                  {dbDepartments.map((dept) => (
+                    <option key={dept.id} value={dept.id}>
+                      {dept.nombre}
                     </option>
                   ))}
                 </select>
@@ -231,14 +140,14 @@ export const LoginPage = ({ onAuth }) => {
                 </label>
                 <select
                   className="w-full px-4 py-3 bg-paper rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-accent/50 transition-all appearance-none"
-                  value={formData.municipality}
+                  value={formData.municipalityId}
                   onChange={(e) =>
-                    setFormData({ ...formData, municipality: e.target.value })
+                    setFormData({ ...formData, municipalityId: e.target.value })
                   }
                 >
-                  {(nicaraguaData[formData.department] || []).map((muni) => (
-                    <option key={muni} value={muni}>
-                      {muni}
+                  {filteredMunicipalities.map((muni) => (
+                    <option key={muni.id} value={muni.id}>
+                      {muni.nombre}
                     </option>
                   ))}
                 </select>
@@ -281,7 +190,11 @@ export const LoginPage = ({ onAuth }) => {
         <p className="mt-6 text-center text-sm text-gray-500">
           {isRegister ? "¿Ya tienes una cuenta?" : "¿Aún no tienes cuenta?"}
           <button
-            onClick={() => setIsRegister(!isRegister)}
+            onClick={() => {
+              setIsRegister(!isRegister);
+              setError(""); // Limpiamos el error al cambiar de modo
+              setFormData((prev) => ({ ...prev, password: "" })); // Limpiamos la contraseña
+            }}
             className="ml-2 font-bold text-brand-accent hover:underline"
           >
             {isRegister ? "Inicia Sesión" : "Regístrate aquí"}

@@ -83,7 +83,17 @@ export const AdminDashboard = () => {
       alert(e.message);
     }
   };
-
+  const handleValidateShipping = async (id) => {
+    try {
+      await admin.validateShippingPayment(id);
+      alert("Pago de Delivery validado exitosamente.");
+      if (selectedOrder?.id === id) {
+        setSelectedOrder((prev) => ({ ...prev, shipping_status: 'validated' }));
+      }
+    } catch (e) {
+      alert(e.message);
+    }
+  };
   const handleProductSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
@@ -393,6 +403,11 @@ export const AdminDashboard = () => {
                           <p className="text-[9px] text-gray-400 font-bold uppercase mt-1">
                             {o.payment_method === 'paypal' ? 'PayPal' : 'Comprobante'}
                           </p>
+                          {o.shipping_type === 'delivery' && o.shipping_status === 'paid' && (
+                            <div className="p-1 px-2 bg-orange-500 text-white rounded-md text-[8px] font-bold text-center uppercase tracking-wider mt-1 animate-pulse">
+                              🔔 Pago Delivery por Revisar
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="flex gap-2 pt-2 border-t border-brand-accent/5 flex-wrap">
@@ -402,7 +417,14 @@ export const AdminDashboard = () => {
                         >
                           Ver Detalle
                         </button>
-
+                        {o.shipping_type === 'delivery' && o.shipping_status === 'paid' && (
+                          <button
+                            onClick={() => handleValidateShipping(o.id)}
+                            className="flex-1 text-[10px] font-bold uppercase tracking-wider py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all"
+                          >
+                            Validar Pago Delivery ✓
+                          </button>
+                        )}
                         {/* Step 1: Admin reviews payment */}
                         {o.status === "pending" && (
                           <button
@@ -491,7 +513,7 @@ export const AdminDashboard = () => {
               {customFurnitures.map(f => (
                 <div key={f.id} className="flex justify-between items-center p-2 hover:bg-paper rounded-lg border">
                   <div className="flex gap-2 items-center">
-                    <img src={f.image_url} className="w-10 h-10 rounded object-cover" />
+                    <img src={api.getImageUrl(f.image_url)} className="w-10 h-10 rounded object-cover" />
                     <div>
                       <p className="text-sm font-bold">{f.name}</p>
                       <p className="text-[10px] font-mono text-gray-500">{f.wood_type} | ${f.base_price}</p>
@@ -693,7 +715,7 @@ export const AdminDashboard = () => {
                       {selectedOrder.user_email}
                     </p>
                   </div>
-                  <div className="grid grid-cols-3 gap-2 pt-2 border-t border-brand-accent/5">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2 border-t border-brand-accent/5">
                     <div>
                       <p className="text-[9px] uppercase font-bold text-gray-400 mb-1">
                         Teléfono
@@ -706,30 +728,66 @@ export const AdminDashboard = () => {
                       <p className="text-[9px] uppercase font-bold text-gray-400 mb-1">
                         Ubicación
                       </p>
-                      <p className="text-xs font-bold">
+                      <p className="text-xs font-bold leading-tight">
                         {selectedOrder.user_municipality},{" "}
                         {selectedOrder.user_department}
                       </p>
                     </div>
                     <div>
                       <p className="text-[9px] uppercase font-bold text-gray-400 mb-1">
-                        Pago
+                        Pago Mueble
                       </p>
                       <p className="text-[10px] font-bold uppercase">
                         {selectedOrder.payment_method === 'paypal' ? 'PayPal' : 'Comprobante'}
                       </p>
                       {selectedOrder.payment_method === 'paypal' && selectedOrder.paypal_order_id && (
-                        <p className="text-[8px] text-gray-400 font-mono leading-tight">{selectedOrder.paypal_order_id}</p>
+                        <p className="text-[8px] text-gray-400 font-mono leading-tight break-all">{selectedOrder.paypal_order_id}</p>
                       )}
                       {selectedOrder.payment_method === 'receipt' && selectedOrder.payment_receipt_url && (
                         <button 
                           onClick={() => setViewReceipt(selectedOrder.payment_receipt_url)}
-                          className="text-[9px] bg-brand-accent/10 text-brand-accent px-2 py-0.5 rounded mt-0.5 hover:bg-brand-accent hover:text-white transition-colors block"
+                          className="text-[9px] bg-brand-accent/10 text-brand-accent px-2 py-0.5 rounded mt-0.5 hover:bg-brand-accent hover:text-white transition-colors block font-bold"
                         >
-                          Ver Comprobante
+                          Ver Recibo
                         </button>
                       )}
                     </div>
+                    
+                    {selectedOrder.shipping_type === 'delivery' && (
+                      <div>
+                        <p className="text-[9px] uppercase font-bold text-gray-400 mb-1">
+                          Pago Delivery
+                        </p>
+                        {selectedOrder.shipping_cost > 0 ? (
+                          <p className="text-[10px] font-bold text-brand-accent">
+                            ${selectedOrder.shipping_cost.toLocaleString()}
+                          </p>
+                        ) : (
+                          <p className="text-[9px] text-gray-400 font-bold">Pendiente</p>
+                        )}
+                        
+                        {selectedOrder.shipping_payment_method ? (
+                          <>
+                            <p className="text-[10px] font-bold uppercase mt-1">
+                              {selectedOrder.shipping_payment_method === 'paypal' ? 'PayPal' : 'Comprobante'}
+                            </p>
+                            {selectedOrder.shipping_payment_method === 'paypal' && selectedOrder.shipping_paypal_order_id && (
+                              <p className="text-[8px] text-gray-400 font-mono leading-tight break-all">{selectedOrder.shipping_paypal_order_id}</p>
+                            )}
+                            {selectedOrder.shipping_payment_method === 'receipt' && selectedOrder.shipping_payment_receipt_url && (
+                              <button 
+                                onClick={() => setViewReceipt(selectedOrder.shipping_payment_receipt_url)}
+                                className="text-[9px] bg-orange-500 text-white px-2 py-0.5 rounded mt-0.5 hover:bg-orange-600 transition-colors block font-bold animate-pulse"
+                              >
+                                Ver Flete
+                              </button>
+                            )}
+                          </>
+                        ) : (
+                          <p className="text-[8px] text-gray-400 italic">Sin pago aún</p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
@@ -742,7 +800,7 @@ export const AdminDashboard = () => {
                         className="flex gap-4 items-center p-2 rounded-xl transition-all"
                       >
                         <img
-                          src={item.image_url}
+                          src={api.getImageUrl(item.image_url)}
                           className="w-12 h-12 rounded-lg object-cover"
                           referrerPolicy="no-referrer"
                         />
@@ -811,7 +869,7 @@ export const AdminDashboard = () => {
               >
                 <X size={20} />
               </button>
-              <img src={viewReceipt} alt="Comprobante de Pago" className="w-full h-auto rounded-xl relative" />
+              <img src={api.getImageUrl(viewReceipt)} alt="Comprobante de Pago" className="w-full h-auto rounded-xl relative" />
             </motion.div>
           </div>
         )}

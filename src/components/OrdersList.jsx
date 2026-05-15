@@ -42,10 +42,10 @@ export const OrdersList = () => {
         const res = await api.upload(receiptFile, 'receipt');
         receiptUrl = res.url;
       }
-      await api.orders.payOrder(selectedOrder.id, {
-        payment_method: paymentMethod,
-        payment_receipt_url: receiptUrl,
-        paypal_order_id:
+      await api.orders.payShipping(selectedOrder.id, {
+        shipping_payment_method: paymentMethod,
+        shipping_payment_receipt_url: receiptUrl,
+        shipping_paypal_order_id:
           paymentMethod === "paypal"
             ? "MOCK_PAYPAL_" + Math.random().toString(36).substr(2, 9)
             : null,
@@ -168,7 +168,7 @@ export const OrdersList = () => {
                 </button>
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-6 max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar">
                 <div className="space-y-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
                   {loadingItems ? (
                     <div className="text-center py-12 text-gray-400 italic">
@@ -178,7 +178,7 @@ export const OrdersList = () => {
                     items.map((item) => (
                       <div key={item.id} className="flex gap-4 items-center">
                         <img
-                          src={item.image_url}
+                          src={api.getImageUrl(item.image_url)}
                           alt={item.name}
                           className="w-14 h-14 rounded-xl object-cover bg-gray-100"
                           referrerPolicy="no-referrer"
@@ -208,11 +208,20 @@ export const OrdersList = () => {
                     </p>
                   </div>
                 )}
-
-                {selectedOrder.shipping_type === 'delivery' && selectedOrder.shipping_cost > 0 && selectedOrder.payment_method === 'pending' && (
+                {selectedOrder.shipping_type === 'delivery' && selectedOrder.shipping_status === 'validated' && (
+                  <div className="p-3 bg-green-50 border border-green-200 text-green-600 rounded-xl text-xs font-bold text-center animate-in fade-in-50">
+                    ✅ Pago de Delivery Validado.
+                  </div>
+                )}
+                {selectedOrder.shipping_type === 'delivery' && selectedOrder.shipping_status === 'paid' && (
+                  <div className="p-3 bg-orange-50 border border-orange-200 text-orange-600 rounded-xl text-xs font-bold text-center animate-in fade-in-50">
+                    🔍 Comprobante de Delivery pendiente de revisar.
+                  </div>
+                )}
+                {selectedOrder.shipping_type === 'delivery' && selectedOrder.shipping_cost > 0 && selectedOrder.shipping_status === 'quoted' && (
                   <div className="p-4 border border-brand-accent/20 rounded-2xl bg-white space-y-4 animate-in slide-in-from-top-2">
                     <p className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                      Pagar Pedido + Delivery (Total: ${(selectedOrder.total + selectedOrder.shipping_cost).toLocaleString()})
+                      Pagar Envío / Delivery (Monto: ${selectedOrder.shipping_cost.toLocaleString()})
                     </p>
                     <div className="space-y-2">
                       <label className="flex items-center gap-2 p-2 border rounded-xl cursor-pointer text-xs">
@@ -261,7 +270,7 @@ export const OrdersList = () => {
                       disabled={isUploading}
                       className="w-full bg-brand-accent text-white py-2.5 rounded-xl text-xs font-bold hover:bg-yellow-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                     >
-                      {isUploading ? "Procesando..." : "Enviar Pago de Pedido"}
+                      {isUploading ? "Procesando..." : "Enviar Pago de Envío"}
                     </button>
                   </div>
                 )}

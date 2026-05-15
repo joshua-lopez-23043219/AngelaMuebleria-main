@@ -74,6 +74,15 @@ export function useAdmin() {
     }
   };
 
+  const validateShippingPayment = async (id) => {
+    try {
+      await api.orders.adminValidateShippingPayment(id);
+      await loadData(true);
+    } catch (e) {
+      throw new Error(e.message);
+    }
+  };
+
   const deleteProduct = async (id) => {
     try {
       await api.products.delete(id);
@@ -92,6 +101,7 @@ export function useAdmin() {
     lastUpdated,
     refresh: () => loadData(false),
     updateOrderStatus,
+    validateShippingPayment,
     deleteProduct,
   };
 }

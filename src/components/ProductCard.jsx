@@ -25,7 +25,7 @@ export const ProductCard = ({
       <div className="product-image-container">
         <img
           src={
-            product.image_url ||
+            api.getImageUrl(product.image_url) ||
             `https://picsum.photos/seed/${product.name}/500/500`
           }
           alt={product.name}

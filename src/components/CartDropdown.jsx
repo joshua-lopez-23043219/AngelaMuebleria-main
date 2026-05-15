@@ -60,26 +60,24 @@ export const CartDropdown = ({
   };
 
   const handleFinalCheckout = async () => {
-    if (shippingType === "pickup") {
-      if (paymentMethod === "receipt" && !receiptFile) {
-        alert("Por favor sube tu comprobante de pago.");
-        return;
-      }
+    if (paymentMethod === "receipt" && !receiptFile) {
+      alert("Por favor sube tu comprobante de pago.");
+      return;
     }
 
     setIsUploading(true);
     try {
       let receiptUrl = null;
-      if (shippingType === "pickup" && paymentMethod === "receipt" && receiptFile) {
+      if (paymentMethod === "receipt" && receiptFile) {
         const res = await api.upload(receiptFile, 'receipt');
         receiptUrl = res.url;
       }
 
       await onCheckout({
-        payment_method: shippingType === "pickup" ? paymentMethod : "pending",
+        payment_method: paymentMethod,
         payment_receipt_url: receiptUrl,
         paypal_order_id:
-          shippingType === "pickup" && paymentMethod === "paypal"
+          paymentMethod === "paypal"
             ? "MOCK_PAYPAL_" + Math.random().toString(36).substr(2, 9)
             : null,
         shipping_type: shippingType,
@@ -144,7 +142,7 @@ export const CartDropdown = ({
                       <div key={item.id} className="flex gap-4 group">
                         <img
                           src={
-                            item.image_url ||
+                            api.getImageUrl(item.image_url) ||
                             `https://picsum.photos/seed/${item.name}/150/150`
                           }
                           className="w-20 h-20 object-cover rounded-lg"
@@ -293,15 +291,11 @@ export const CartDropdown = ({
                         alert("Por favor ingresa tu dirección exacta.");
                         return;
                       }
-                      if (shippingType === "delivery") {
-                        handleFinalCheckout();
-                      } else {
-                        setStep("payment");
-                      }
+                      setStep("payment");
                     }}
                     className="w-full bg-brand-primary text-white py-4 rounded-xl font-bold tracking-tight hover:bg-brand-accent transition-all flex items-center justify-center gap-2"
                   >
-                    {shippingType === "delivery" ? "Confirmar Pedido" : "Proceder al Pago"} <ChevronRight size={18} />
+                    Proceder al Pago <ChevronRight size={18} />
                   </button>
                   <button
                     onClick={() => setStep("cart")}

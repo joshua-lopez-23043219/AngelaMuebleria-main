@@ -1,82 +1,119 @@
-const API_BASE = "/api";
+const API_BASE = import.meta.env.VITE_API_URL || "";
 
 export const api = {
+  // Ayudante para obtener la URL completa de una imagen
+  getImageUrl(url) {
+    if (!url) return null;
+    if (url.startsWith("http")) return url;
+    // Si la ruta es relativa (comienza con /), le pegamos el dominio del backend
+    return `${API_BASE}${url.startsWith("/") ? "" : "/"}${url}`;
+  },
+
   async fetch(endpoint, options = {}) {
     const token = localStorage.getItem("muebleria_token");
+    const isAuthRequest = endpoint.includes("/api/token/") || (endpoint.includes("/apiUsuarios/Usuario/") && options.method === "POST");
+
     const headers = {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(token && !isAuthRequest ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     };
 
     const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
     if (!res.ok) {
       const error = await res.json().catch(() => ({ error: "Unknown error" }));
-      throw new Error(error.error || "Request failed");
+      
+      // Si el token es inválido o expiró (Error 401)
+      if (res.status === 401) {
+        localStorage.removeItem("muebleria_token");
+        localStorage.removeItem("muebleria_user");
+        // Si el catálogo falla por token, lanzamos un mensaje más amigable
+        if (endpoint.includes("/apiProducto/")) {
+           throw new Error("Sesión expirada. Cargando catálogo público...");
+        }
+      }
+
+      // Si Django nos dice que el username/email ya existe:
+      if (error.username || error.email) {
+        throw new Error("Este correo electrónico ya está registrado. Intenta con otro o inicia sesión.");
+      }
+
+      throw new Error(error.error || error.detail || "Error en la solicitud. Revisa tus datos.");
     }
     return res.json();
   },
 
   auth: {
-    login: (credentials) =>
-      api.fetch("/auth/login", {
+    login: async (credentials) => {
+      // Django SimpleJWT espera 'username', así que mapeamos 'email' a 'username'
+      const data = await api.fetch("/api/token/", {
         method: "POST",
-        body: JSON.stringify(credentials),
-      }),
+        body: JSON.stringify({
+          username: credentials.email,
+          password: credentials.password,
+        }),
+      });
+      // Ahora usamos los datos REALES que vienen de Django (id, name, role)
+      return { 
+        token: data.access, 
+        user: data.user 
+      };
+    },
     register: (userData) =>
-      api.fetch("/auth/register", {
+      api.fetch("/apiUsuarios/Usuario/", {
         method: "POST",
-        body: JSON.stringify(userData),
+        body: JSON.stringify({
+          username: userData.email,
+          email: userData.email,
+          password: userData.password,
+          first_name: userData.name,
+          last_name: "",
+          numero_telefono: userData.phone || "",
+          direccion_exacta: userData.address || "",
+          municipio: userData.municipalityId || null, // Ahora enviamos el ID real de Postgres
+          rol: "cliente"
+        }),
       }),
   },
 
   products: {
-    getAll: () => api.fetch("/products"),
+    getAll: () => api.fetch("/apiProducto/Producto/"),
     create: (data) =>
-      api.fetch("/products", { method: "POST", body: JSON.stringify(data) }),
+      api.fetch("/apiProducto/Producto/", { method: "POST", body: JSON.stringify(data) }),
     update: (id, data) =>
-      api.fetch(`/products/${id}`, {
+      api.fetch(`/apiProducto/Producto/${id}/`, {
         method: "PATCH",
         body: JSON.stringify(data),
       }),
-    delete: (id) => api.fetch(`/products/${id}`, { method: "DELETE" }),
+    delete: (id) => api.fetch(`/apiProducto/Producto/${id}/`, { method: "DELETE" }),
   },
 
   orders: {
     create: (data) =>
-      api.fetch("/orders", { method: "POST", body: JSON.stringify(data) }),
-    getMy: () => api.fetch("/orders/my"),
-    getMyItems: (id) => api.fetch(`/orders/${id}/items`),
-    adminGetAll: () => api.fetch("/admin/orders"),
+      api.fetch("/apiPedidos/Pedido/", { method: "POST", body: JSON.stringify(data) }),
+    getMy: () => [], // Temporal: Evitar error hasta que implementes la ruta 'my' en Django
+    getMyItems: (id) => [],
+    adminGetAll: () => api.fetch("/apiPedidos/Pedido/"),
     adminUpdateStatus: (id, status) =>
-      api.fetch(`/admin/orders/${id}/status`, {
+      api.fetch(`/apiPedidos/Pedido/${id}/status/`, {
         method: "PATCH",
         body: JSON.stringify({ status }),
-      }),
-    adminGetItems: (id) => api.fetch(`/admin/orders/${id}/items`),
-    adminSetShippingCost: (id, shipping_cost) =>
-      api.fetch(`/admin/orders/${id}/shipping`, {
-        method: "PATCH",
-        body: JSON.stringify({ shipping_cost }),
-      }),
-    payOrder: (id, data) =>
-      api.fetch(`/orders/${id}/payment`, {
-        method: "PATCH",
-        body: JSON.stringify(data),
       }),
   },
 
   admin: {
-    getStats: () => api.fetch("/admin/stats"),
+    getStats: () => ({ revenue: 0, orders: 0, products: 0, lowStock: 0 }), // Temporal
   },
 
   upload: async (file, type) => {
+    // Las subidas de archivos en Django requieren una configuración diferente (FormData)
+    // Dejamos el endpoint como estaba pero apuntando a la estructura de Django
     const formData = new FormData();
     formData.append("file", file);
     formData.append("type", type);
     
     const token = localStorage.getItem("muebleria_token");
-    const res = await fetch(`${API_BASE}/upload`, {
+    const res = await fetch(`${API_BASE}/api/upload/`, { 
       method: "POST",
       headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       body: formData,
@@ -86,17 +123,17 @@ export const api = {
   },
 
   customizations: {
-    getFurnitures: () => api.fetch("/custom-furnitures"),
-    createFurniture: (data) => api.fetch("/custom-furnitures", { method: "POST", body: JSON.stringify(data) }),
-    deleteFurniture: (id) => api.fetch(`/custom-furnitures/${id}`, { method: "DELETE" }),
-    
-    getColors: () => api.fetch("/custom-colors"),
-    createColor: (data) => api.fetch("/custom-colors", { method: "POST", body: JSON.stringify(data) }),
-    deleteColor: (id) => api.fetch(`/custom-colors/${id}`, { method: "DELETE" }),
+    getFurnitures: () => [], // Desactivado hasta que exista en Django
+    getColors: () => [],
   },
 
   marketing: {
-    subscribeNewsletter: (email) => api.fetch("/newsletter", { method: "POST", body: JSON.stringify({ email }) }),
-    validateDiscount: (code) => api.fetch("/discount/validate", { method: "POST", body: JSON.stringify({ code }) })
+    subscribeNewsletter: (email) => ({ success: true }),
+    validateDiscount: (code) => ({ valid: false }),
+  },
+
+  locations: {
+    getDepartments: () => api.fetch("/apiDepartamento/Departamento/"),
+    getMunicipalities: () => api.fetch("/apiMunicipio/Municipio/"),
   }
 };
