@@ -20,27 +20,28 @@ export function useAdmin() {
         api.products.getAll(),
       ]);
 
-      // Stats
-      if (results[0].status === "fulfilled") {
-        setStats(results[0].value);
-      } else {
-        console.error("Stats error:", results[0].reason);
-        setError("Error stats: " + (results[0].reason?.message || "desconocido"));
+      let backendStats = results[0].status === "fulfilled" ? results[0].value : null;
+      const ordersData = results[1].status === "fulfilled" ? results[1].value : [];
+      const productsData = results[2].status === "fulfilled" ? results[2].value : [];
+
+      // Si el backend no da stats, las calculamos localmente
+      if (!backendStats) {
+        backendStats = {
+          revenue: ordersData.reduce((acc, o) => acc + (o.status !== 'cancelled' ? (Number(o.total) || 0) : 0), 0),
+          orders: ordersData.length,
+          products: productsData.length,
+          lowStock: productsData.filter(p => p.stock < 5).length
+        };
       }
 
-      // Orders
-      if (results[1].status === "fulfilled") {
-        setOrders(results[1].value);
-      } else {
+      setStats(backendStats);
+      setOrders(ordersData);
+      setProducts(productsData);
+
+      // Si hubo error en pedidos, informamos
+      if (results[1].status === "rejected") {
         console.error("Orders error:", results[1].reason);
         setError("Error pedidos: " + (results[1].reason?.message || "desconocido"));
-      }
-
-      // Products
-      if (results[2].status === "fulfilled") {
-        setProducts(results[2].value);
-      } else {
-        console.error("Products error:", results[2].reason);
       }
 
       setLastUpdated(new Date());

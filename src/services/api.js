@@ -92,7 +92,10 @@ export const api = {
   },
 
   products: {
-    getAll: () => apiFetch("/apiProducto/Producto/"),
+    getAll: async () => {
+      const res = await apiFetch("/apiProducto/Producto/");
+      return Array.isArray(res) ? res : (res.results || []);
+    },
     create: (data) =>
       apiFetch("/apiProducto/Producto/", { method: "POST", body: JSON.stringify(data) }),
     update: (id, data) =>
@@ -106,18 +109,34 @@ export const api = {
   orders: {
     create: (data) =>
       apiFetch("/apiPedidos/Pedido/", { method: "POST", body: JSON.stringify(data) }),
-    getMy: () => apiFetch("/apiPedidos/Pedido/mis_pedidos/"),
+    getMy: async () => {
+      const res = await apiFetch("/apiPedidos/Pedido/mis_pedidos/");
+      return Array.isArray(res) ? res : (res.results || []);
+    },
     getMyItems: (id) => apiFetch(`/apiPedidos/Pedido/${id}/get_detalles/`),
-    adminGetAll: () => apiFetch("/apiPedidos/Pedido/"),
+    adminGetAll: async () => {
+      const res = await apiFetch("/apiPedidos/Pedido/");
+      return Array.isArray(res) ? res : (res.results || []);
+    },
     adminUpdateStatus: (id, status) =>
       apiFetch(`/apiPedidos/Pedido/${id}/status/`, {
         method: "PATCH",
         body: JSON.stringify({ status }),
       }),
+    adminSetShippingCost: (id, cost) =>
+      apiFetch(`/apiPedidos/Pedido/${id}/set_shipping_cost/`, {
+        method: "PATCH",
+        body: JSON.stringify({ shipping_cost: cost }),
+      }),
+    adminValidateShippingPayment: (id) =>
+      apiFetch(`/apiPedidos/Pedido/${id}/validate_shipping/`, {
+        method: "POST",
+      }),
+    adminGetItems: (id) => apiFetch(`/apiPedidos/Pedido/${id}/get_detalles/`),
   },
 
   admin: {
-    getStats: () => ({ revenue: 0, orders: 0, products: 0, lowStock: 0 }),
+    getStats: () => apiFetch("/apiPedidos/Pedido/stats/").catch(() => null),
   },
 
   upload: async (file, type) => {
@@ -131,13 +150,26 @@ export const api = {
       headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       body: formData,
     });
-    if (!res.ok) throw new Error("Upload failed");
+    if (!res.ok) {
+       const err = await res.json().catch(() => ({}));
+       throw new Error(err.error || "Error al subir imagen");
+    }
     return res.json();
   },
 
   customizations: {
-    getFurnitures: () => [],
-    getColors: () => [],
+    getFurnitures: async () => {
+      const res = await apiFetch("/apiPersonalizacion/MuebleBase/");
+      return Array.isArray(res) ? res : (res.results || []);
+    },
+    createFurniture: (data) => apiFetch("/apiPersonalizacion/MuebleBase/", { method: "POST", body: JSON.stringify(data) }),
+    deleteFurniture: (id) => apiFetch(`/apiPersonalizacion/MuebleBase/${id}/`, { method: "DELETE" }),
+    getColors: async () => {
+      const res = await apiFetch("/apiPersonalizacion/ColorMaterial/");
+      return Array.isArray(res) ? res : (res.results || []);
+    },
+    createColor: (data) => apiFetch("/apiPersonalizacion/ColorMaterial/", { method: "POST", body: JSON.stringify(data) }),
+    deleteColor: (id) => apiFetch(`/apiPersonalizacion/ColorMaterial/${id}/`, { method: "DELETE" }),
   },
 
   marketing: {

@@ -114,7 +114,7 @@ export default function App() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {prod.products
-                .filter((p) => p.stock > 0)
+                .filter((p) => (Number(p.stock) || 0) > 0)
                 .map((p) => (
                   <ProductCard
                     key={p.id}
@@ -123,7 +123,7 @@ export default function App() {
                   />
                 ))}
             </div>
-            {prod.products.filter((p) => p.stock > 0).length === 0 && (
+            {prod.products.filter((p) => (Number(p.stock) || 0) > 0).length === 0 && (
               <p className="text-center py-20 text-gray-400 italic font-serif text-xl">
                 Lo sentimos, no hay productos en stock en este momento.
               </p>

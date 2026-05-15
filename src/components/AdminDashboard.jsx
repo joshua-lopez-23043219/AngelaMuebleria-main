@@ -259,9 +259,10 @@ export const AdminDashboard = () => {
                       <tr>
                         <th className="px-6 py-4">Producto</th>
                         <th className="px-6 py-4">Categoría</th>
+                        <th className="px-6 py-4">Madera</th>
                         <th className="px-6 py-4">Precio</th>
                         <th className="px-6 py-4">Stock</th>
-                        <th className="px-6 py-4">Acciones</th>
+                        <th className="px-6 py-4 text-right">Acciones</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-brand-accent/5">
@@ -284,6 +285,9 @@ export const AdminDashboard = () => {
                             <td className="px-6 py-4 text-sm text-gray-500">
                               {p.category}
                             </td>
+                            <td className="px-6 py-4 text-sm text-brand-accent font-mono">
+                              {p.wood_type || 'N/A'}
+                            </td>
                             <td className="px-6 py-4 font-mono text-sm">
                               ${p.price.toLocaleString()}
                             </td>
@@ -291,7 +295,7 @@ export const AdminDashboard = () => {
                               <span
                                 className={cn(
                                   "px-2 py-1 rounded text-xs font-bold",
-                                  p.stock < 5
+                                  (Number(p.stock) || 0) < 5
                                     ? "bg-red-50 text-red-600"
                                     : "bg-green-50 text-green-600",
                                 )}
