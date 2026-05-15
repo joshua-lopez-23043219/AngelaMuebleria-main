@@ -200,8 +200,7 @@ export const AdminDashboard = () => {
           Actualizando métricas y pedidos...
         </div>
       ) : (
-        <>
-        {activeTab === 'dashboard' && (
+             {activeTab === 'dashboard' && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               {[
@@ -323,180 +322,7 @@ export const AdminDashboard = () => {
                   </table>
                 </div>
               </section>
-            {activeTab === 'pedidos' && (
-              <section className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-                <div className="flex justify-between items-center border-b pb-2">
-                  <h2 className="text-2xl font-serif font-bold">
-                    Gestión de Pedidos
-                  </h2>
-                  <span className="bg-brand-accent text-white px-3 py-1 rounded-full text-xs font-bold">
-                    {admin.orders.length} pedidos
-                  </span>
-                </div>
-                
-                {admin.orders.length === 0 ? (
-                  <div className="bg-white p-12 rounded-2xl border border-dashed border-brand-accent/20 text-center text-gray-400">
-                    <ShoppingCart
-                      size={48}
-                      className="mx-auto mb-4 opacity-20"
-                    />
-                    <p className="text-lg font-serif italic">
-                      No hay pedidos registrados
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {admin.orders.map((o) => (
-                      <div
-                        key={o.id}
-                        className="bg-white p-5 rounded-2xl border border-brand-accent/10 shadow-sm space-y-4 hover:border-brand-accent/30 transition-all flex flex-col"
-                      >
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="text-base font-bold text-gray-800">
-                              {o.user_name || "Usuario desconocido"}
-                            </p>
-                            <p className="text-[11px] text-gray-400 font-mono mt-0.5">
-                              {new Date(o.created_at).toLocaleString()}
-                            </p>
-                            <div className="flex flex-col gap-1 mt-3">
-                              <p className="text-[11px] text-brand-accent font-mono flex items-center gap-1 bg-brand-accent/5 w-max px-2 py-1 rounded-md">
-                                <span>📱 {o.user_phone}</span>
-                              </p>
-                              <p className="text-[11px] text-gray-500 font-medium">
-                                📍 {o.user_department}, {o.user_municipality}
-                              </p>
-                              <div className="mt-3 p-3 bg-paper rounded-xl border border-brand-accent/5 text-[11px] space-y-2">
-                                <span className="font-bold text-gray-700 bg-white px-2 py-1 rounded shadow-sm border block w-max">
-                                  {o.shipping_type === 'delivery' ? '🚚 ENVÍO A DOMICILIO' : '🏪 RETIRAR EN TIENDA'}
-                                </span>
-                                {o.shipping_type === 'delivery' && (
-                                  <>
-                                    <p className="text-gray-600 leading-relaxed"><span className="font-bold block text-[10px] uppercase text-gray-400 mb-0.5">Dirección Exacta:</span> {o.shipping_address}</p>
-                                    <p className="text-brand-accent font-bold mt-2">
-                                      Costo Delivery: {o.shipping_cost > 0 ? `$${o.shipping_cost}` : 'No asignado'}
-                                    </p>
-                                    
-                                    {(!o.shipping_cost || o.shipping_cost === 0) && (
-                                      <div className="mt-2 flex gap-2 items-center bg-white p-2 rounded border border-yellow-100 shadow-inner">
-                                        <input 
-                                          type="number" 
-                                          placeholder="$ Costo Flete"
-                                          value={shippingCosts[o.id] || ""}
-                                          onChange={(e) => setShippingCosts(prev => ({...prev, [o.id]: e.target.value}))}
-                                          className="w-full p-1.5 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-brand-accent"
-                                        />
-                                        <button 
-                                          onClick={() => handleSetShippingCost(o.id)}
-                                          className="px-3 py-1.5 bg-brand-primary text-white font-bold rounded hover:bg-brand-accent transition-all whitespace-nowrap"
-                                        >
-                                          Asignar
-                                        </button>
-                                      </div>
-                                    )}
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="text-right shrink-0 ml-4">
-                            <p className="font-mono text-lg font-bold text-brand-accent mb-1">
-                              ${o.total.toLocaleString()}
-                            </p>
-                            <span
-                              className={cn(
-                                "text-[10px] px-2.5 py-1 rounded-full uppercase font-bold shadow-sm inline-block",
-                                o.status === "pending"           ? "bg-yellow-100 text-yellow-700" :
-                                o.status === "payment_review"    ? "bg-orange-100 text-orange-700" :
-                                o.status === "payment_validated" ? "bg-blue-100 text-blue-700" :
-                                o.status === "processing"        ? "bg-purple-100 text-purple-700" :
-                                o.status === "delivered"         ? "bg-green-100 text-green-700" :
-                                "bg-red-100 text-red-700"
-                              )}
-                            >
-                              {o.status === "pending"           ? "Pend. Procesar" :
-                               o.status === "payment_review"    ? "Revisando Pago" :
-                               o.status === "payment_validated" ? "Pago Validado" :
-                               o.status === "processing"        ? "En Proceso" :
-                               o.status === "delivered"         ? "Finalizado" :
-                               "Cancelado"}
-                            </span>
-                            <p className="text-[10px] text-gray-400 font-bold uppercase mt-2">
-                              Pago: {o.payment_method === 'paypal' ? 'PayPal' : 'Comprobante'}
-                            </p>
-                            {o.shipping_type === 'delivery' && o.shipping_status === 'paid' && (
-                              <div className="p-1.5 bg-orange-500 text-white rounded-lg text-[9px] font-bold text-center uppercase tracking-wider mt-2 animate-pulse shadow-md">
-                                🔔 Revisar Flete
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex gap-2 pt-4 mt-auto border-t border-brand-accent/10 flex-wrap">
-                          <button
-                            onClick={() => loadOrderDetails(o)}
-                            className="flex-1 text-[11px] font-bold uppercase tracking-wider py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all"
-                          >
-                            Ver Detalle
-                          </button>
-                          {o.shipping_type === 'delivery' && o.shipping_status === 'paid' && (
-                            <button
-                              onClick={() => handleValidateShipping(o.id)}
-                              className="flex-1 text-[11px] font-bold uppercase tracking-wider py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all shadow-sm"
-                            >
-                              Validar Flete ✓
-                            </button>
-                          )}
-                          {/* Step 1: Admin reviews payment */}
-                          {o.status === "pending" && (
-                            <button
-                              onClick={() => handleUpdateStatus(o.id, "payment_review")}
-                              className="flex-1 text-[11px] font-bold uppercase tracking-wider py-2.5 bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition-all shadow-sm"
-                            >
-                              Revisar Pago
-                            </button>
-                          )}
-
-                          {/* Step 2: Admin validates payment */}
-                          {o.status === "payment_review" && (
-                            <button
-                              onClick={() => handleUpdateStatus(o.id, "payment_validated")}
-                              className="flex-1 text-[11px] font-bold uppercase tracking-wider py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-sm"
-                            >
-                              Validar Pago ✓
-                            </button>
-                          )}
-
-                          {/* Step 3: Mark as processing (in fabrication/pending pickup) */}
-                          {o.status === "payment_validated" && (
-                            <button
-                              onClick={() => handleUpdateStatus(o.id, "processing")}
-                              className="flex-1 text-[11px] font-bold uppercase tracking-wider py-2.5 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-all shadow-sm"
-                            >
-                              En Proceso
-                            </button>
-                          )}
-
-                          {/* Step 4: Finalize / delivered */}
-                          {o.status === "processing" && (
-                            <button
-                              onClick={() => handleUpdateStatus(o.id, "delivered")}
-                              className="flex-1 text-[11px] font-bold uppercase tracking-wider py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all shadow-sm"
-                            >
-                              Finalizar ✓
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </section>
-            )}           )}
-              </div>
-            </section>
-          </div>
-        </>
-      )}
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
               <section className="space-y-6">
@@ -603,6 +429,178 @@ export const AdminDashboard = () => {
             </div>
           </>
         )}
+
+        {activeTab === 'pedidos' && (
+          <section className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+            <div className="flex justify-between items-center border-b pb-2">
+              <h2 className="text-2xl font-serif font-bold">
+                Gestión de Pedidos
+              </h2>
+              <span className="bg-brand-accent text-white px-3 py-1 rounded-full text-xs font-bold">
+                {admin.orders.length} pedidos
+              </span>
+            </div>
+            
+            {admin.orders.length === 0 ? (
+              <div className="bg-white p-12 rounded-2xl border border-dashed border-brand-accent/20 text-center text-gray-400">
+                <ShoppingCart
+                  size={48}
+                  className="mx-auto mb-4 opacity-20"
+                />
+                <p className="text-lg font-serif italic">
+                  No hay pedidos registrados
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {admin.orders.map((o) => (
+                  <div
+                    key={o.id}
+                    className="bg-white p-5 rounded-2xl border border-brand-accent/10 shadow-sm space-y-4 hover:border-brand-accent/30 transition-all flex flex-col"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-base font-bold text-gray-800">
+                          {o.user_name || "Usuario desconocido"}
+                        </p>
+                        <p className="text-[11px] text-gray-400 font-mono mt-0.5">
+                          {new Date(o.created_at).toLocaleString()}
+                        </p>
+                        <div className="flex flex-col gap-1 mt-3">
+                          <p className="text-[11px] text-brand-accent font-mono flex items-center gap-1 bg-brand-accent/5 w-max px-2 py-1 rounded-md">
+                            <span>📱 {o.user_phone}</span>
+                          </p>
+                          <p className="text-[11px] text-gray-500 font-medium">
+                            📍 {o.user_department}, {o.user_municipality}
+                          </p>
+                          <div className="mt-3 p-3 bg-paper rounded-xl border border-brand-accent/5 text-[11px] space-y-2">
+                            <span className="font-bold text-gray-700 bg-white px-2 py-1 rounded shadow-sm border block w-max">
+                              {o.shipping_type === 'delivery' ? '🚚 ENVÍO A DOMICILIO' : '🏪 RETIRAR EN TIENDA'}
+                            </span>
+                            {o.shipping_type === 'delivery' && (
+                              <>
+                                <p className="text-gray-600 leading-relaxed"><span className="font-bold block text-[10px] uppercase text-gray-400 mb-0.5">Dirección Exacta:</span> {o.shipping_address}</p>
+                                <p className="text-brand-accent font-bold mt-2">
+                                  Costo Delivery: {o.shipping_cost > 0 ? `$${o.shipping_cost}` : 'No asignado'}
+                                </p>
+                                
+                                {(!o.shipping_cost || o.shipping_cost === 0) && (
+                                  <div className="mt-2 flex gap-2 items-center bg-white p-2 rounded border border-yellow-100 shadow-inner">
+                                    <input 
+                                      type="number" 
+                                      placeholder="$ Costo Flete"
+                                      value={shippingCosts[o.id] || ""}
+                                      onChange={(e) => setShippingCosts(prev => ({...prev, [o.id]: e.target.value}))}
+                                      className="w-full p-1.5 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-brand-accent"
+                                    />
+                                    <button 
+                                      onClick={() => handleSetShippingCost(o.id)}
+                                      className="px-3 py-1.5 bg-brand-primary text-white font-bold rounded hover:bg-brand-accent transition-all whitespace-nowrap"
+                                    >
+                                      Asignar
+                                    </button>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0 ml-4">
+                        <p className="font-mono text-lg font-bold text-brand-accent mb-1">
+                          ${o.total.toLocaleString()}
+                        </p>
+                        <span
+                          className={cn(
+                            "text-[10px] px-2.5 py-1 rounded-full uppercase font-bold shadow-sm inline-block",
+                            o.status === "pending"           ? "bg-yellow-100 text-yellow-700" :
+                            o.status === "payment_review"    ? "bg-orange-100 text-orange-700" :
+                            o.status === "payment_validated" ? "bg-blue-100 text-blue-700" :
+                            o.status === "processing"        ? "bg-purple-100 text-purple-700" :
+                            o.status === "delivered"         ? "bg-green-100 text-green-700" :
+                            "bg-red-100 text-red-700"
+                          )}
+                        >
+                          {o.status === "pending"           ? "Pend. Procesar" :
+                            o.status === "payment_review"    ? "Revisando Pago" :
+                            o.status === "payment_validated" ? "Pago Validado" :
+                            o.status === "processing"        ? "En Proceso" :
+                            o.status === "delivered"         ? "Finalizado" :
+                            "Cancelado"}
+                        </span>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase mt-2">
+                          Pago: {o.payment_method === 'paypal' ? 'PayPal' : 'Comprobante'}
+                        </p>
+                        {o.shipping_type === 'delivery' && o.shipping_status === 'paid' && (
+                          <div className="p-1.5 bg-orange-500 text-white rounded-lg text-[9px] font-bold text-center uppercase tracking-wider mt-2 animate-pulse shadow-md">
+                            🔔 Revisar Flete
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex gap-2 pt-4 mt-auto border-t border-brand-accent/10 flex-wrap">
+                      <button
+                        onClick={() => loadOrderDetails(o)}
+                        className="flex-1 text-[11px] font-bold uppercase tracking-wider py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all"
+                      >
+                        Ver Detalle
+                      </button>
+                      {o.shipping_type === 'delivery' && o.shipping_status === 'paid' && (
+                        <button
+                          onClick={() => handleValidateShipping(o.id)}
+                          className="flex-1 text-[11px] font-bold uppercase tracking-wider py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all shadow-sm"
+                        >
+                          Validar Flete ✓
+                        </button>
+                      )}
+                      {/* Step 1: Admin reviews payment */}
+                      {o.status === "pending" && (
+                        <button
+                          onClick={() => handleUpdateStatus(o.id, "payment_review")}
+                          className="flex-1 text-[11px] font-bold uppercase tracking-wider py-2.5 bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition-all shadow-sm"
+                        >
+                          Revisar Pago
+                        </button>
+                      )}
+
+                      {/* Step 2: Admin validates payment */}
+                      {o.status === "payment_review" && (
+                        <button
+                          onClick={() => handleUpdateStatus(o.id, "payment_validated")}
+                          className="flex-1 text-[11px] font-bold uppercase tracking-wider py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-sm"
+                        >
+                          Validar Pago ✓
+                        </button>
+                      )}
+
+                      {/* Step 3: Mark as processing (in fabrication/pending pickup) */}
+                      {o.status === "payment_validated" && (
+                        <button
+                          onClick={() => handleUpdateStatus(o.id, "processing")}
+                          className="flex-1 text-[11px] font-bold uppercase tracking-wider py-2.5 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-all shadow-sm"
+                        >
+                          En Proceso
+                        </button>
+                      )}
+
+                      {/* Step 4: Finalize / delivered */}
+                      {o.status === "processing" && (
+                        <button
+                          onClick={() => handleUpdateStatus(o.id, "delivered")}
+                          className="flex-1 text-[11px] font-bold uppercase tracking-wider py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all shadow-sm"
+                        >
+                          Finalizar ✓
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+      </>
+    )}
 
       {/* Form and Detail Modals */}
       <AnimatePresence>
