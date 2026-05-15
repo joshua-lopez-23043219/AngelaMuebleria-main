@@ -200,7 +200,8 @@ export const AdminDashboard = () => {
           Actualizando métricas y pedidos...
         </div>
       ) : (
-             {activeTab === 'dashboard' && (
+        <>
+          {activeTab === 'dashboard' && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               {[
