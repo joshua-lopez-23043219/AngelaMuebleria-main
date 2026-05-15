@@ -650,11 +650,28 @@ export const AdminDashboard = () => {
                     type="file"
                     name="image_file"
                     accept="image/*"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                          const preview = document.getElementById('image-preview');
+                          if (preview) preview.src = e.target.result;
+                        };
+                        reader.readAsDataURL(e.target.files[0]);
+                      }
+                    }}
                     className="w-full px-4 py-1.5 border rounded-lg text-sm bg-white"
                   />
-                  {editingProduct?.image_url && (
+                  {editingProduct?.image_url && !document.getElementById('image-preview')?.src?.startsWith('data:') && (
                     <p className="text-[10px] text-gray-400 mt-1">Ya tiene una imagen asignada. Sube otra para reemplazarla.</p>
                   )}
+                  <div className="mt-2 flex justify-center">
+                    <img 
+                      id="image-preview" 
+                      src={editingProduct?.image_url ? api.getImageUrl(editingProduct.image_url) : ""} 
+                      className={`max-h-32 rounded-lg border object-contain ${(!editingProduct?.image_url && !document.getElementById('image-preview')?.src) ? 'hidden' : ''}`}
+                    />
+                  </div>
                 </div>
                 <div className="col-span-2 flex gap-4 mt-4">
                   <button
