@@ -37,6 +37,10 @@ export const api = {
       if (error.username || error.email) {
         throw new Error("Este correo electrónico ya está registrado. Intenta con otro o inicia sesión.");
       }
+      // Si la cuenta aún no ha sido activada por correo (Error de SimpleJWT)
+      if (error.detail && error.detail.includes("No active account found")) {
+        throw new Error("Tu cuenta aún no está activada. Por favor, revisa tu correo electrónico y haz clic en el enlace de confirmación.");
+      }
 
       throw new Error(error.error || error.detail || "Error en la solicitud. Revisa tus datos.");
     }
@@ -91,8 +95,8 @@ export const api = {
   orders: {
     create: (data) =>
       api.fetch("/apiPedidos/Pedido/", { method: "POST", body: JSON.stringify(data) }),
-    getMy: () => [], // Temporal: Evitar error hasta que implementes la ruta 'my' en Django
-    getMyItems: (id) => [],
+    getMy: () => api.fetch("/apiPedidos/Pedido/mis_pedidos/"),
+    getMyItems: (id) => api.fetch(`/apiPedidos/Pedido/${id}/get_detalles/`),
     adminGetAll: () => api.fetch("/apiPedidos/Pedido/"),
     adminUpdateStatus: (id, status) =>
       api.fetch(`/apiPedidos/Pedido/${id}/status/`, {
