@@ -132,8 +132,10 @@ export const api = {
   },
 
   marketing: {
-    subscribeNewsletter: (email) => ({ success: true }),
-    validateDiscount: (code) => ({ valid: false }),
+    subscribeNewsletter: (email) => 
+      api.fetch("/apiSuscripcion/Suscripcion/", { method: "POST", body: JSON.stringify({ email }) }),
+    validateDiscount: (code) => 
+      api.fetch("/apiSuscripcion/Suscripcion/validate-discount/", { method: "POST", body: JSON.stringify({ code }) }),
   },
 
   locations: {
