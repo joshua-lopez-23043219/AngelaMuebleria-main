@@ -34,7 +34,18 @@ const apiFetch = async (endpoint, options = {}) => {
 
   const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
   if (!res.ok) {
-    const error = await res.json().catch(() => ({ error: "Unknown error" }));
+    let errorMsg = "Error en el servidor";
+    let errorData = {};
+    try {
+      errorData = await res.json();
+      errorMsg = errorData.error || errorData.detail || errorMsg;
+    } catch (e) {
+      if (res.status === 500) {
+        errorMsg = "Error interno del servidor (500). Por favor contacta al soporte.";
+      } else {
+        errorMsg = `Error ${res.status}: La solicitud no pudo ser procesada.`;
+      }
+    }
     
     if (res.status === 401) {
       localStorage.removeItem("muebleria_token");
@@ -44,14 +55,14 @@ const apiFetch = async (endpoint, options = {}) => {
       }
     }
 
-    if (error.username || error.email) {
+    if (errorData.username || errorData.email) {
       throw new Error("Este correo electrónico ya está registrado. Intenta con otro o inicia sesión.");
     }
-    if (error.detail && error.detail.includes("No active account found")) {
+    if (errorData.detail && errorData.detail.includes("No active account found")) {
       throw new Error("Tu cuenta aún no está activada. Por favor, revisa tu correo electrónico y haz clic en el enlace de confirmación.");
     }
 
-    throw new Error(error.error || error.detail || "Error en la solicitud. Revisa tus datos.");
+    throw new Error(errorMsg);
   }
   return res.json();
 };
