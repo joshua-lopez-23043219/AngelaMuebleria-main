@@ -111,6 +111,7 @@ export const OrdersList = () => {
                   o.status === "payment_review"    ? "bg-orange-50 text-orange-500" :
                   o.status === "payment_validated" ? "bg-blue-50 text-blue-600" :
                   o.status === "processing"        ? "bg-purple-50 text-purple-600" :
+                  o.status === "ready"             ? "bg-indigo-50 text-indigo-600" :
                   o.status === "delivered"         ? "bg-green-50 text-green-600" :
                   "bg-red-50 text-red-500"
                 )}
@@ -118,7 +119,8 @@ export const OrdersList = () => {
                 {o.status === "pending"           ? "🕐 Pendiente de Procesar" :
                  o.status === "payment_review"    ? "🔍 Revisando Pago" :
                  o.status === "payment_validated" ? "✅ Pago Validado" :
-                 o.status === "processing"        ? "🔨 En Fabricación / Entrega" :
+                 o.status === "processing"        ? "🔨 En Fabricación" :
+                 o.status === "ready"             ? "📦 Listo para Entrega" :
                  o.status === "delivered"         ? "🎉 Finalizado" :
                  "❌ Cancelado"}
               </span>
