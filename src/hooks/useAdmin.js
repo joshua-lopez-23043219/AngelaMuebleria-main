@@ -68,8 +68,9 @@ export function useAdmin() {
 
   const updateOrderStatus = async (id, status) => {
     try {
-      await api.orders.adminUpdateStatus(id, status);
-      await loadData(true);
+      const updatedOrder = await api.orders.adminUpdateStatus(id, status);
+      // Actualizar el estado local con la respuesta real del servidor
+      setOrders(prev => prev.map(o => o.id === id ? updatedOrder : o));
     } catch (e) {
       throw new Error(e.message);
     }
