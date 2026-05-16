@@ -530,6 +530,7 @@ export const AdminDashboard = () => {
                             o.status === "payment_review"    ? "bg-orange-100 text-orange-700" :
                             o.status === "payment_validated" ? "bg-blue-100 text-blue-700" :
                             o.status === "processing"        ? "bg-purple-100 text-purple-700" :
+                            o.status === "ready"             ? "bg-indigo-100 text-indigo-700" :
                             o.status === "delivered"         ? "bg-green-100 text-green-700" :
                             "bg-red-100 text-red-700"
                           )}
@@ -538,6 +539,7 @@ export const AdminDashboard = () => {
                             o.status === "payment_review"    ? "Revisando Pago" :
                             o.status === "payment_validated" ? "Pago Validado" :
                             o.status === "processing"        ? "En Proceso" :
+                            o.status === "ready"             ? "Listo para Entrega" :
                             o.status === "delivered"         ? "Finalizado" :
                             "Cancelado"}
                         </span>
@@ -597,7 +599,18 @@ export const AdminDashboard = () => {
                       )}
 
                       {/* Step 4: Finalize / delivered */}
+                      {/* Step 4: Mark as ready */}
                       {o.status === "processing" && (
+                        <button
+                          onClick={() => handleUpdateStatus(o.id, "ready")}
+                          className="flex-1 text-[11px] font-bold uppercase tracking-wider py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-sm"
+                        >
+                          Listo ✓
+                        </button>
+                      )}
+
+                      {/* Step 5: Finalize / delivered */}
+                      {o.status === "ready" && (
                         <button
                           onClick={() => handleUpdateStatus(o.id, "delivered")}
                           className="flex-1 text-[11px] font-bold uppercase tracking-wider py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all shadow-sm"

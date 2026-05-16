@@ -101,6 +101,7 @@ export function useAdmin() {
     error,
     lastUpdated,
     refresh: () => loadData(false),
+    setOrders,
     updateOrderStatus,
     validateShippingPayment,
     deleteProduct,
