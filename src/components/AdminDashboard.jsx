@@ -195,7 +195,7 @@ export const AdminDashboard = () => {
         <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 flex items-center gap-3">
           <AlertCircle size={20} />
           <p className="text-sm font-medium">
-            Error al cargar datos: {admin.error}
+            Error al cargar datos: {String(admin.error)}
           </p>
           <button onClick={admin.refresh} className="ml-auto underline text-xs">
             Reintentar
@@ -215,25 +215,25 @@ export const AdminDashboard = () => {
               {[
                 {
                   label: "Ingresos Totales",
-                  value: "C$" + (admin.stats?.revenue?.toLocaleString() || 0),
-                  icon: <TrendingUp className="text-green-600" />,
-                  color: "bg-green-50",
+                  value: `C$${(Number(admin.stats?.revenue) || 0).toLocaleString()}`,
+                  icon: TrendingUp,
+                  color: "text-brand-accent",
                 },
                 {
                   label: "Pedidos",
-                  value: admin.stats?.orders || 0,
+                  value: String(admin.stats?.orders || 0),
                   icon: ShoppingCart,
                   color: "text-blue-600",
                 },
                 {
                   label: "Productos",
-                  value: admin.stats?.products || 0,
+                  value: String(admin.stats?.products || 0),
                   icon: Package,
                   color: "text-purple-600",
                 },
                 {
                   label: "Stock Bajo",
-                  value: admin.stats?.lowStock || 0,
+                  value: String(admin.stats?.lowStock || 0),
                   icon: AlertCircle,
                   color: "text-red-500",
                 },
@@ -245,7 +245,7 @@ export const AdminDashboard = () => {
                   transition={{ delay: i * 0.1 }}
                   className="bg-white p-6 rounded-2xl border border-brand-accent/10 shadow-sm"
                 >
-                  {typeof stat.icon === 'function' ? <stat.icon className={cn("mb-2", stat.color)} size={24} /> : <div className="mb-2">{stat.icon}</div>}
+                  <stat.icon className={cn("mb-2", stat.color)} size={24} />
                   <p className="text-xs uppercase tracking-widest font-bold text-gray-400">
                     {stat.label}
                   </p>
@@ -296,10 +296,8 @@ export const AdminDashboard = () => {
                             <td className="px-6 py-4 text-sm text-brand-accent font-mono">
                               {p.wood_type || 'N/A'}
                             </td>
-                            <td className="px-6 py-4">
-                              <p className="text-xs font-mono font-bold text-brand-primary">
-                                C${p.price.toLocaleString()}
-                              </p>
+                            <td className="px-6 py-4 font-mono text-sm">
+                              C${p.price.toLocaleString()}
                             </td>
                             <td className="px-6 py-4">
                               <span
@@ -381,7 +379,7 @@ export const AdminDashboard = () => {
                           <img src={api.getImageUrl(f.image_url)} className="w-10 h-10 rounded object-cover" />
                           <div>
                             <p className="text-sm font-bold">{f.name}</p>
-                            <p className="text-[10px] font-mono text-gray-500">{f.wood_type} | C${f.base_price}</p>
+                            <p className="text-[10px] font-mono text-gray-500">{f.wood_type} | ${f.base_price}</p>
                           </div>
                         </div>
                         <button onClick={async () => {
@@ -427,7 +425,7 @@ export const AdminDashboard = () => {
                           <div className="w-6 h-6 rounded-full border shadow-sm" style={{ backgroundColor: c.hex_code }} />
                           <div>
                             <p className="text-sm font-bold">{c.name}</p>
-                            <p className="text-[10px] uppercase font-bold text-gray-500">{c.type === 'paint' ? 'Pintura' : 'Tela'} (+C${c.price_modifier})</p>
+                            <p className="text-[10px] uppercase font-bold text-gray-500">{c.type === 'paint' ? 'Pintura' : 'Tela'} (+${c.price_modifier})</p>
                           </div>
                         </div>
                         <button onClick={async () => {
@@ -496,7 +494,7 @@ export const AdminDashboard = () => {
                               <>
                                 <p className="text-gray-600 leading-relaxed"><span className="font-bold block text-[10px] uppercase text-gray-400 mb-0.5">Dirección Exacta:</span> {o.shipping_address}</p>
                                 <p className="text-brand-accent font-bold mt-2">
-                                  Costo Delivery: {o.shipping_cost > 0 ? "C$" + o.shipping_cost : 'No asignado'}
+                                  Costo Delivery: {o.shipping_cost > 0 ? `C$${o.shipping_cost}` : 'No asignado'}
                                 </p>
                                 
                                 {(!o.shipping_cost || o.shipping_cost === 0) && (
@@ -836,9 +834,9 @@ export const AdminDashboard = () => {
                           Pago Delivery
                         </p>
                         {selectedOrder.shipping_cost > 0 ? (
-                            <p className="text-gray-400 font-mono">
-                              C${selectedOrder.shipping_cost.toLocaleString()}
-                            </p>
+                          <p className="text-[10px] font-bold text-brand-accent">
+                            ${selectedOrder.shipping_cost.toLocaleString()}
+                          </p>
                         ) : (
                           <p className="text-[9px] text-gray-400 font-bold">Pendiente</p>
                         )}
