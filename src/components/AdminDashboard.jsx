@@ -75,14 +75,22 @@ export const AdminDashboard = () => {
     }
   };
 
-  const handleUpdateStatus = async (id, status) => {
+  const handleUpdateStatus = async (id, newStatus) => {
+    // Actualización optimista de la interfaz
+    const previousOrders = [...admin.orders];
+    const updatedOrders = admin.orders.map(o => o.id === id ? { ...o, status: newStatus } : o);
+    admin.setOrders(updatedOrders);
+    
+    if (selectedOrder?.id === id) {
+      setSelectedOrder(prev => ({ ...prev, status: newStatus }));
+    }
+
     try {
-      await admin.updateOrderStatus(id, status);
-      if (selectedOrder?.id === id) {
-        setSelectedOrder((prev) => ({ ...prev, status }));
-      }
+      await admin.updateOrderStatus(id, newStatus);
     } catch (e) {
-      alert(e.message);
+      // Revertir en caso de error
+      admin.setOrders(previousOrders);
+      alert("Error al actualizar estado: " + e.message);
     }
   };
   const handleValidateShipping = async (id) => {
