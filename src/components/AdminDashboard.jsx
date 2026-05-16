@@ -790,12 +790,20 @@ export const AdminDashboard = () => {
                         <p className="text-[8px] text-gray-400 font-mono leading-tight break-all">{selectedOrder.paypal_order_id}</p>
                       )}
                       {selectedOrder.payment_method === 'receipt' && selectedOrder.payment_receipt_url && (
-                        <button 
-                          onClick={() => setViewReceipt(selectedOrder.payment_receipt_url)}
-                          className="text-[9px] bg-brand-accent/10 text-brand-accent px-2 py-0.5 rounded mt-0.5 hover:bg-brand-accent hover:text-white transition-colors block font-bold"
-                        >
-                          Ver Recibo
-                        </button>
+                        <div className="mt-1">
+                          <img 
+                            src={api.getImageUrl(selectedOrder.payment_receipt_url)} 
+                            alt="Comprobante" 
+                            className="w-16 h-16 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity mb-1"
+                            onClick={() => setViewReceipt(selectedOrder.payment_receipt_url)}
+                          />
+                          <button 
+                            onClick={() => setViewReceipt(selectedOrder.payment_receipt_url)}
+                            className="text-[9px] bg-brand-accent/10 text-brand-accent px-2 py-0.5 rounded hover:bg-brand-accent hover:text-white transition-colors font-bold w-16 text-center"
+                          >
+                            Ampliar
+                          </button>
+                        </div>
                       )}
                     </div>
                     
@@ -821,12 +829,20 @@ export const AdminDashboard = () => {
                               <p className="text-[8px] text-gray-400 font-mono leading-tight break-all">{selectedOrder.shipping_paypal_order_id}</p>
                             )}
                             {selectedOrder.shipping_payment_method === 'receipt' && selectedOrder.shipping_payment_receipt_url && (
-                              <button 
-                                onClick={() => setViewReceipt(selectedOrder.shipping_payment_receipt_url)}
-                                className="text-[9px] bg-orange-500 text-white px-2 py-0.5 rounded mt-0.5 hover:bg-orange-600 transition-colors block font-bold animate-pulse"
-                              >
-                                Ver Flete
-                              </button>
+                              <div className="mt-2">
+                                <img 
+                                  src={api.getImageUrl(selectedOrder.shipping_payment_receipt_url)} 
+                                  alt="Flete" 
+                                  className="w-16 h-16 object-cover rounded-lg border border-orange-200 cursor-pointer hover:opacity-80 transition-opacity mb-1"
+                                  onClick={() => setViewReceipt(selectedOrder.shipping_payment_receipt_url)}
+                                />
+                                <button 
+                                  onClick={() => setViewReceipt(selectedOrder.shipping_payment_receipt_url)}
+                                  className="text-[9px] bg-orange-500 text-white px-2 py-0.5 rounded hover:bg-orange-600 transition-colors font-bold w-16 text-center animate-pulse"
+                                >
+                                  Ver Flete
+                                </button>
+                              </div>
                             )}
                           </>
                         ) : (
