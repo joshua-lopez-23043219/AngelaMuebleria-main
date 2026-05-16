@@ -97,7 +97,7 @@ export const OrdersList = () => {
                 Pedido #{o.id}
               </p>
               <p className="text-lg font-serif font-bold">
-                ${o.total.toLocaleString()}
+                C${o.total.toLocaleString()}
               </p>
               <p className="text-xs text-gray-500">
                 {new Date(o.created_at).toLocaleString()}
@@ -189,12 +189,12 @@ export const OrdersList = () => {
                           <p className="font-bold text-sm leading-tight">
                             {item.name}
                           </p>
-                          <p className="text-[10px] text-gray-500">
-                            {item.quantity} x ${item.price.toLocaleString()}
+                          <p className="text-xs text-gray-500 font-mono">
+                            {item.quantity} x C${item.price.toLocaleString()}
                           </p>
                         </div>
-                        <p className="font-mono font-bold text-sm">
-                          ${(item.quantity * item.price).toLocaleString()}
+                        <p className="text-sm font-bold text-gray-800">
+                          C${(item.quantity * item.price).toLocaleString()}
                         </p>
                       </div>
                     ))
@@ -206,7 +206,7 @@ export const OrdersList = () => {
                     <p className="font-bold text-gray-700">🚚 Envío a Domicilio</p>
                     <p className="text-gray-500 text-xs"><span className="font-bold">Dirección:</span> {selectedOrder.shipping_address}</p>
                     <p className="text-brand-accent font-bold text-xs mt-1">
-                      Costo Delivery: {selectedOrder.shipping_cost > 0 ? `$${selectedOrder.shipping_cost.toLocaleString()}` : '🕐 Pendiente de cotización por el administrador.'}
+                      Costo Delivery: {selectedOrder.shipping_cost > 0 ? "C$" + selectedOrder.shipping_cost.toLocaleString() : '🕐 Pendiente de cotización por el administrador.'}
                     </p>
                   </div>
                 )}
@@ -223,7 +223,7 @@ export const OrdersList = () => {
                 {selectedOrder.shipping_type === 'delivery' && selectedOrder.shipping_cost > 0 && selectedOrder.shipping_status === 'quoted' && (
                   <div className="p-4 border border-brand-accent/20 rounded-2xl bg-white space-y-4 animate-in slide-in-from-top-2">
                     <p className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                      Pagar Envío / Delivery (Monto: ${selectedOrder.shipping_cost.toLocaleString()})
+                      Pagar Envío / Delivery (Monto: C${selectedOrder.shipping_cost.toLocaleString()})
                     </p>
                     <div className="space-y-2">
                       <label className="flex items-center gap-2 p-2 border rounded-xl cursor-pointer text-xs">
@@ -281,9 +281,12 @@ export const OrdersList = () => {
                   <p className="text-sm font-serif italic text-gray-500">
                     Subtotal {selectedOrder.shipping_type === 'delivery' && selectedOrder.shipping_cost > 0 && '+ Delivery'}
                   </p>
-                  <p className="text-2xl font-serif font-bold text-brand-primary">
-                    ${(selectedOrder.total + (selectedOrder.shipping_cost || 0)).toLocaleString()}
-                  </p>
+                  <div className="flex justify-between items-center text-lg font-serif font-bold text-brand-primary pt-2 border-t">
+                    <span>Total General</span>
+                    <span>
+                      C${(selectedOrder.total + (selectedOrder.shipping_cost || 0)).toLocaleString()}
+                    </span>
+                  </div>
                 </div>
 
                 <div

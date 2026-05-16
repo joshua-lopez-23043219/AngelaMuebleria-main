@@ -43,11 +43,11 @@ export const ProductCard = ({
         )}
       </div>
 
-      <div className="space-y-1">
+      <div className="space-y-3">
         <div className="flex justify-between items-start">
           <h3 className="font-serif text-lg leading-tight">{product.name}</h3>
           <span className="font-mono text-brand-accent text-sm font-bold">
-            ${product.price.toLocaleString()}
+            C${product.price.toLocaleString()}
           </span>
         </div>
         <p className="text-sm text-gray-500 line-clamp-2">

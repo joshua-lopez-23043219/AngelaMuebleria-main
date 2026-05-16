@@ -223,7 +223,7 @@ export const FurnitureBuilder = () => {
                   ></div>
                   <div className="flex-1">
                     <p className="text-sm font-medium">{m.name}</p>
-                    {m.price_modifier > 0 && <p className="text-[10px] text-brand-accent font-bold">+{m.price_modifier}$</p>}
+                    {m.price_modifier > 0 && <p className="text-[10px] text-brand-accent font-bold">+C${m.price_modifier}</p>}
                   </div>
                 </button>
               ))}
@@ -250,7 +250,7 @@ export const FurnitureBuilder = () => {
                   ></div>
                   <div className="flex-1">
                     <p className="text-sm font-medium">{f.name}</p>
-                    {f.price_modifier > 0 && <p className="text-[10px] text-brand-accent font-bold">+{f.price_modifier}$</p>}
+                    {f.price_modifier > 0 && <p className="text-[10px] text-brand-accent font-bold">+C${f.price_modifier}</p>}
                   </div>
                 </button>
               ))}
@@ -277,7 +277,7 @@ export const FurnitureBuilder = () => {
           <div className="pt-6 border-t border-dashed">
             <div className="flex justify-between items-center mb-4">
               <p className="text-gray-400 text-sm">Precio Estimado</p>
-              <p className="text-lg font-serif font-bold">${((selectedFurniture?.base_price || 0) + (materials.find(m => m.id === material)?.price_modifier || 0) + (fabrics.find(f => f.id === fabric)?.price_modifier || 0)).toLocaleString()}</p>
+              <p className="text-lg font-serif font-bold">C${((selectedFurniture?.base_price || 0) + (materials.find(m => m.id === material)?.price_modifier || 0) + (fabrics.find(f => f.id === fabric)?.price_modifier || 0)).toLocaleString()}</p>
             </div>
             <button className="w-full py-4 bg-brand-primary text-white rounded-2xl font-bold hover:bg-brand-accent transition-all">
               Cotizar Diseño

@@ -152,7 +152,7 @@ export const CartDropdown = ({
                         <div className="flex-1">
                           <h4 className="font-medium text-sm">{item.name}</h4>
                           <p className="text-xs text-brand-accent font-bold">
-                            ${item.price.toLocaleString()} x {item.quantity}
+                            C${item.price.toLocaleString()} x {item.quantity}
                           </p>
                         </div>
                         <button
@@ -203,19 +203,19 @@ export const CartDropdown = ({
                   {discount && (
                     <div className="flex justify-between text-sm text-gray-400">
                       <span>Subtotal</span>
-                      <span>${(rawTotal || total).toLocaleString()}</span>
+                      <span>C${(rawTotal || total).toLocaleString()}</span>
                     </div>
                   )}
                   {discount && (
                     <div className="flex justify-between text-sm text-green-600 font-bold">
                       <span>Descuento ({discount.percentage}%)</span>
-                      <span>-${((rawTotal || total) * discount.percentage / 100).toLocaleString()}</span>
+                      <span>-C${((rawTotal || total) * discount.percentage / 100).toLocaleString()}</span>
                     </div>
                   )}
                   <div className="flex justify-between items-center">
                     <span className="text-gray-500">Total</span>
                     <span className="text-2xl font-serif font-bold">
-                      ${total.toLocaleString()}
+                      C${total.toLocaleString()}
                     </span>
                   </div>
                   <button
@@ -380,7 +380,7 @@ export const CartDropdown = ({
                   <div className="flex justify-between items-center">
                     <span className="text-gray-500">Total a Pagar</span>
                     <span className="text-2xl font-serif font-bold text-brand-primary">
-                      ${total.toLocaleString()}
+                      C${total.toLocaleString()}
                     </span>
                   </div>
                   <button
