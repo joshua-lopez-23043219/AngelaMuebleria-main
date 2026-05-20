@@ -109,6 +109,8 @@ export const AdminDashboard = () => {
     const formData = new FormData(e.target);
     const file = formData.get("image_file");
     const data = Object.fromEntries(formData.entries());
+    // Convert checkbox string to boolean
+    data.esta_activo = formData.get("esta_activo") === "on";
     
     try {
       if (file && file.size > 0) {
@@ -694,6 +696,18 @@ export const AdminDashboard = () => {
                   defaultValue={editingProduct?.wood_type}
                   className="w-full px-4 py-2 border rounded-lg"
                 />
+                <div className="sm:col-span-2 flex items-center gap-2 px-1 py-2">
+                  <input 
+                    type="checkbox" 
+                    name="esta_activo" 
+                    id="esta_activo" 
+                    defaultChecked={editingProduct ? editingProduct.esta_activo : true}
+                    className="w-4 h-4 accent-brand-accent rounded cursor-pointer"
+                  />
+                  <label htmlFor="esta_activo" className="text-sm font-bold text-gray-600 cursor-pointer">
+                    Mostrar producto en el catálogo público
+                  </label>
+                </div>
                 <div className="sm:col-span-2 w-full">
                   <label className="text-[10px] text-gray-500 font-bold uppercase mb-1 block">Imagen del Producto</label>
                   <input

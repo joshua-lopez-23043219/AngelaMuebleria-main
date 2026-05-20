@@ -93,11 +93,11 @@ export const HomeView = ({ onStartShopping }) => {
 
       {/* Stats Section */}
       <section className="-mt-16 relative z-20 max-w-7xl mx-auto w-full px-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-0 bg-white shadow-2xl rounded-[2rem] overflow-hidden border border-brand-accent/10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-0 bg-white shadow-2xl rounded-[2rem] overflow-hidden border border-brand-accent/10 divide-y sm:divide-y-0 md:divide-x divide-brand-accent/10">
           {stats.map((stat, i) => (
             <div
               key={stat.label}
-              className={`p-8 text-center ${i !== stats.length - 1 ? "md:border-r border-brand-accent/10" : ""}`}
+              className="p-8 text-center"
             >
               <p className="text-4xl font-serif font-bold text-brand-primary">
                 {stat.value}
@@ -139,7 +139,7 @@ export const HomeView = ({ onStartShopping }) => {
                 nicaragüense.
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-8 pt-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-6">
               <div className="space-y-2">
                 <h4 className="font-serif font-bold text-xl">
                   Calidad Certificada

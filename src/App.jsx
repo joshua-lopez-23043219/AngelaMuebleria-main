@@ -21,6 +21,13 @@ export default function App() {
   const auth = useAuth();
   const prod = useProducts();
   const cart = useCart(auth.user);
+  
+  // Refresh products whenever we navigate to a public listing page
+  React.useEffect(() => {
+    if (currentPage === "catalog" || currentPage === "designs") {
+      prod.refreshProducts();
+    }
+  }, [currentPage, prod.refreshProducts]);
 
   const handleCheckoutSuccess = () => {
     setCurrentPage("orders");
@@ -82,13 +89,15 @@ export default function App() {
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {prod.products.map((p) => (
-                <ProductCard
-                  key={p.id}
-                  product={p}
-                  onAddToCart={cart.addToCart}
-                />
-              ))}
+              {prod.products
+                .filter(p => p.esta_activo !== false)
+                .map((p) => (
+                  <ProductCard
+                    key={p.id}
+                    product={p}
+                    onAddToCart={cart.addToCart}
+                  />
+                ))}
             </div>
 
             {prod.error && (
@@ -114,7 +123,7 @@ export default function App() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {prod.products
-                .filter((p) => (Number(p.stock) || 0) > 0)
+                .filter((p) => (Number(p.stock) || 0) > 0 && p.esta_activo !== false)
                 .map((p) => (
                   <ProductCard
                     key={p.id}
