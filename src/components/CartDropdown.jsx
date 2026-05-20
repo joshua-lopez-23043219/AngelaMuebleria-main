@@ -14,6 +14,8 @@ export const CartDropdown = ({
   discount,
   onApplyDiscount,
   onClearDiscount,
+  comboDiscounts = [],
+  comboDiscountTotal = 0,
 }) => {
   const [step, setStep] = useState("cart"); // "cart" | "shipping" | "payment"
   const [shippingType, setShippingType] = useState("pickup"); // "pickup" | "delivery"
@@ -200,16 +202,38 @@ export const CartDropdown = ({
                   )}
 
                   {/* Total summary */}
-                  {discount && (
+                  {comboDiscounts && comboDiscounts.length > 0 && (
+                    <div className="space-y-2 border-b border-brand-accent/5 pb-2 mb-2">
+                      {comboDiscounts.map((combo, idx) => {
+                        if (combo.promptAddGift) {
+                          return (
+                            <div key={idx} className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 space-y-1 animate-pulse">
+                              <p className="font-bold flex items-center gap-1">✨ ¡Combo Disponible: {combo.nombre}!</p>
+                              <p>Agrega {combo.giftsAllowed} {combo.categoria_regalo_nombre || combo.tipo_regalo || 'regalo(s)'} a tu carrito para llevártelo gratis.</p>
+                            </div>
+                          );
+                        } else {
+                          return (
+                            <div key={idx} className="flex justify-between text-sm text-green-600 font-medium">
+                              <span className="flex items-center gap-1">🎁 {combo.nombre}</span>
+                              <span>-C${combo.monto.toLocaleString()}</span>
+                            </div>
+                          );
+                        }
+                      })}
+                    </div>
+                  )}
+
+                  {(discount || comboDiscountTotal > 0) && (
                     <div className="flex justify-between text-sm text-gray-400">
                       <span>Subtotal</span>
-                      <span>C${(rawTotal || total).toLocaleString()}</span>
+                      <span>C${rawTotal.toLocaleString()}</span>
                     </div>
                   )}
                   {discount && (
-                    <div className="flex justify-between text-sm text-green-600 font-bold">
-                      <span>Descuento ({discount.percentage}%)</span>
-                      <span>-C${((rawTotal || total) * discount.percentage / 100).toLocaleString()}</span>
+                    <div className="flex justify-between text-sm text-green-600 font-medium">
+                      <span>Cupón Descuento ({discount.percentage}%)</span>
+                      <span>-C${(rawTotal * discount.percentage / 100).toLocaleString()}</span>
                     </div>
                   )}
                   <div className="flex justify-between items-center">

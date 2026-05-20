@@ -307,6 +307,27 @@ export const OrdersList = () => {
                    selectedOrder.status === "delivered"         ? "🎉 ¡Pedido Finalizado! Gracias por tu compra." :
                    "❌ Pedido Cancelado."}
                 </div>
+
+                {/* Cancel Order Action */}
+                {(selectedOrder.status === "pending" || selectedOrder.status === "payment_review") && (
+                  <button
+                    onClick={async () => {
+                      if (confirm("¿Estás seguro de que deseas cancelar este pedido? Esta acción no se puede deshacer y liberará los productos.")) {
+                        try {
+                          await api.orders.cancel(selectedOrder.id);
+                          alert("Pedido cancelado exitosamente.");
+                          setSelectedOrder(null);
+                          ordersApi.refresh();
+                        } catch (e) {
+                          alert("Error al cancelar el pedido: " + e.message);
+                        }
+                      }
+                    }}
+                    className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-2xl text-xs uppercase tracking-wider transition-all mt-4"
+                  >
+                    Cancelar Pedido
+                  </button>
+                )}
               </div>
             </motion.div>
           </div>

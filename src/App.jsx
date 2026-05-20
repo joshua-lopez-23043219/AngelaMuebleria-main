@@ -179,6 +179,8 @@ export default function App() {
         discount={cart.discount}
         onApplyDiscount={cart.applyDiscount}
         onClearDiscount={cart.clearDiscount}
+        comboDiscounts={cart.comboDiscounts}
+        comboDiscountTotal={cart.comboDiscountTotal}
       />
 
       {/* Footer Section */}

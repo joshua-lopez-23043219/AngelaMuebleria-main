@@ -36,6 +36,87 @@ export const AdminDashboard = () => {
 
   const [activeTab, setActiveTab] = useState("dashboard"); // "dashboard" | "pedidos"
 
+  const [combos, setCombos] = useState([]);
+  const [categoriesList, setCategoriesList] = useState([]);
+  const [loadingCombos, setLoadingCombos] = useState(false);
+  const [newCombo, setNewCombo] = useState({
+    nombre: "",
+    tipo_requerido: "silla",
+    categoria_requerida: "",
+    cantidad_requerida: 4,
+    tipo_regalo: "mesa",
+    categoria_regalo: "",
+    cantidad_regalo: 1,
+    esta_activo: true,
+  });
+
+  const loadCombosData = async () => {
+    setLoadingCombos(true);
+    try {
+      const dataCombos = await api.combos.getAll();
+      setCombos(dataCombos);
+      const cats = await api.categories.getAll();
+      setCategoriesList(cats);
+    } catch (e) {
+      console.error("Error loading combos or categories:", e);
+    } finally {
+      setLoadingCombos(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "combos") {
+      loadCombosData();
+    }
+  }, [activeTab]);
+
+  const handleCreateCombo = async (e) => {
+    e.preventDefault();
+    if (!newCombo.nombre.trim()) {
+      alert("Por favor ingresa un nombre para el combo.");
+      return;
+    }
+    try {
+      const payload = {
+        nombre: newCombo.nombre,
+        tipo_requerido: newCombo.tipo_requerido,
+        categoria_requerida: newCombo.categoria_requerida ? parseInt(newCombo.categoria_requerida) : null,
+        cantidad_requerida: parseInt(newCombo.cantidad_requerida),
+        tipo_regalo: newCombo.tipo_regalo,
+        categoria_regalo: newCombo.categoria_regalo ? parseInt(newCombo.categoria_regalo) : null,
+        cantidad_regalo: parseInt(newCombo.cantidad_regalo),
+        esta_activo: newCombo.esta_activo,
+      };
+      await api.combos.create(payload);
+      alert("Combo creado exitosamente.");
+      setNewCombo({
+        nombre: "",
+        tipo_requerido: "silla",
+        categoria_requerida: "",
+        cantidad_requerida: 4,
+        tipo_regalo: "mesa",
+        categoria_regalo: "",
+        cantidad_regalo: 1,
+        esta_activo: true,
+      });
+      loadCombosData();
+    } catch (e) {
+      alert("Error al crear el combo: " + e.message);
+    }
+  };
+
+  const handleDeleteCombo = async (id) => {
+    if (confirm("¿Estás seguro de que deseas eliminar esta regla de combo?")) {
+      try {
+        await api.combos.delete(id);
+        alert("Combo eliminado exitosamente.");
+        loadCombosData();
+      } catch (e) {
+        alert("Error al eliminar el combo: " + e.message);
+      }
+    }
+  };
+
   const loadCustomizations = async () => {
     try {
       setCustomFurnitures(await api.customizations.getFurnitures());
@@ -164,6 +245,12 @@ export const AdminDashboard = () => {
               className={`pb-2 font-bold transition-all ${activeTab === 'pedidos' ? 'text-brand-accent border-b-2 border-brand-accent' : 'text-gray-400 hover:text-gray-600'}`}
             >
               Gestión de Pedidos
+            </button>
+            <button
+              onClick={() => setActiveTab('combos')}
+              className={`pb-2 font-bold transition-all ${activeTab === 'combos' ? 'text-brand-accent border-b-2 border-brand-accent' : 'text-gray-400 hover:text-gray-600'}`}
+            >
+              Configuración de Combos
             </button>
           </div>
           {admin.lastUpdated && activeTab === 'dashboard' && (
@@ -625,6 +712,194 @@ export const AdminDashboard = () => {
                 ))}
               </div>
             )}
+          </section>
+        )}
+
+        {activeTab === 'combos' && (
+          <section className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+            <div className="flex justify-between items-center border-b pb-2">
+              <h2 className="text-2xl font-serif font-bold">Configuración de Combos Promocionales</h2>
+              <span className="bg-brand-accent text-white px-3 py-1 rounded-full text-xs font-bold">
+                {combos.length} reglas activas
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Form to Create Combo */}
+              <div className="lg:col-span-1 bg-white p-6 rounded-2xl border border-brand-accent/10 shadow-sm space-y-4">
+                <h3 className="text-lg font-serif font-bold border-b pb-2">Crear Nueva Regla</h3>
+                <form onSubmit={handleCreateCombo} className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Nombre del Combo</label>
+                    <input
+                      type="text"
+                      placeholder="Ej. Lleva una mesa gratis por 4 sillas"
+                      value={newCombo.nombre}
+                      onChange={(e) => setNewCombo({ ...newCombo, nombre: e.target.value })}
+                      className="w-full px-4 py-2 border rounded-lg text-sm"
+                      required
+                    />
+                  </div>
+
+                  <div className="p-3 bg-paper/50 rounded-xl space-y-3 border">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-brand-primary">Condición (Requisito)</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase">Tipo</label>
+                        <select
+                          value={newCombo.tipo_requerido}
+                          onChange={(e) => setNewCombo({ ...newCombo, tipo_requerido: e.target.value })}
+                          className="w-full px-2 py-1.5 border rounded-lg text-xs"
+                        >
+                          <option value="silla">Silla</option>
+                          <option value="mesa">Mesa</option>
+                          <option value="sofa">Sofá</option>
+                          <option value="cama">Cama</option>
+                          <option value="armario">Armario</option>
+                          <option value="otro">Otro</option>
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase">Cantidad</label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={newCombo.cantidad_requerida}
+                          onChange={(e) => setNewCombo({ ...newCombo, cantidad_requerida: e.target.value })}
+                          className="w-full px-2 py-1.5 border rounded-lg text-xs"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase">Categoría Específica (Opcional)</label>
+                      <select
+                        value={newCombo.categoria_requerida}
+                        onChange={(e) => setNewCombo({ ...newCombo, categoria_requerida: e.target.value })}
+                        className="w-full px-2 py-1.5 border rounded-lg text-xs"
+                      >
+                        <option value="">Cualquiera</option>
+                        {categoriesList.map((cat) => (
+                          <option key={cat.id} value={cat.id}>{cat.nombre}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-brand-accent/5 rounded-xl space-y-3 border border-brand-accent/20">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-brand-accent">Regalía (Gratis)</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase">Tipo Regalo</label>
+                        <select
+                          value={newCombo.tipo_regalo}
+                          onChange={(e) => setNewCombo({ ...newCombo, tipo_regalo: e.target.value })}
+                          className="w-full px-2 py-1.5 border rounded-lg text-xs"
+                        >
+                          <option value="mesa">Mesa</option>
+                          <option value="silla">Silla</option>
+                          <option value="sofa">Sofá</option>
+                          <option value="cama">Cama</option>
+                          <option value="armario">Armario</option>
+                          <option value="otro">Otro</option>
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase">Cantidad Regalo</label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={newCombo.cantidad_regalo}
+                          onChange={(e) => setNewCombo({ ...newCombo, cantidad_regalo: e.target.value })}
+                          className="w-full px-2 py-1.5 border rounded-lg text-xs"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase">Categoría Regalo (Opcional)</label>
+                      <select
+                        value={newCombo.categoria_regalo}
+                        onChange={(e) => setNewCombo({ ...newCombo, categoria_regalo: e.target.value })}
+                        className="w-full px-2 py-1.5 border rounded-lg text-xs"
+                      >
+                        <option value="">Cualquiera</option>
+                        {categoriesList.map((cat) => (
+                          <option key={cat.id} value={cat.id}>{cat.nombre}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 px-1">
+                    <input
+                      type="checkbox"
+                      id="esta_activo_combo"
+                      checked={newCombo.esta_activo}
+                      onChange={(e) => setNewCombo({ ...newCombo, esta_activo: e.target.checked })}
+                      className="w-4 h-4 accent-brand-accent rounded cursor-pointer"
+                    />
+                    <label htmlFor="esta_activo_combo" className="text-xs font-medium text-gray-600 cursor-pointer select-none">
+                      Regla Activa
+                    </label>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full bg-brand-primary hover:bg-brand-accent text-white font-bold py-2.5 rounded-xl text-sm transition-all flex items-center justify-center gap-2"
+                  >
+                    <Plus size={16} /> Crear Combo
+                  </button>
+                </form>
+              </div>
+
+              {/* List of Combos */}
+              <div className="lg:col-span-2 space-y-4">
+                {loadingCombos ? (
+                  <div className="text-center py-12 text-gray-400 italic">Cargando combos...</div>
+                ) : combos.length === 0 ? (
+                  <div className="bg-white p-12 rounded-2xl border border-dashed border-brand-accent/20 text-center text-gray-400">
+                    <p className="text-lg font-serif italic">No hay reglas de combo configuradas.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {combos.map((c) => (
+                      <div key={c.id} className="bg-white p-5 rounded-2xl border border-brand-accent/10 shadow-sm flex flex-col justify-between space-y-4">
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-start">
+                            <h4 className="font-serif font-bold text-base text-brand-primary">{c.nombre}</h4>
+                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${c.esta_activo ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
+                              {c.esta_activo ? 'Activo' : 'Inactivo'}
+                            </span>
+                          </div>
+
+                          <div className="text-xs text-gray-500 space-y-1">
+                            <p>
+                              👉 Compra: <span className="font-bold text-gray-700">{c.cantidad_requerida} {c.tipo_requerido}(s)</span>
+                              {c.categoria_requerida_nombre && <span> de la categoría <span className="font-bold text-brand-accent">{c.categoria_requerida_nombre}</span></span>}
+                            </p>
+                            <p>
+                              🎁 Regalo: <span className="font-bold text-green-600">{c.cantidad_regalo} {c.tipo_regalo}(s)</span>
+                              {c.categoria_regalo_nombre && <span> de la categoría <span className="font-bold text-brand-accent">{c.categoria_regalo_nombre}</span></span>}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end pt-2 border-t border-dashed">
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteCombo(c.id)}
+                            className="text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-all text-xs font-bold flex items-center gap-1"
+                          >
+                            <Trash2 size={14} /> Eliminar
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </section>
         )}
       </>

@@ -39,6 +39,12 @@ const apiFetch = async (endpoint, options = {}) => {
     try {
       errorData = await res.json();
       errorMsg = errorData.error || errorData.detail || errorMsg;
+      if (Array.isArray(errorMsg)) {
+        errorMsg = errorMsg[0];
+      } else if (typeof errorMsg === 'object' && errorMsg !== null) {
+        errorMsg = Object.values(errorMsg)[0];
+        if (Array.isArray(errorMsg)) errorMsg = errorMsg[0];
+      }
     } catch (e) {
       if (res.status === 500) {
         errorMsg = "Error interno del servidor (500). Por favor contacta al soporte.";
@@ -58,8 +64,8 @@ const apiFetch = async (endpoint, options = {}) => {
     if (errorData.username || errorData.email) {
       throw new Error("Este correo electrónico ya está registrado. Intenta con otro o inicia sesión.");
     }
-    if (errorData.detail && errorData.detail.includes("No active account found")) {
-      throw new Error("Tu cuenta aún no está activada. Por favor, revisa tu correo electrónico y haz clic en el enlace de confirmación.");
+    if (errorMsg && typeof errorMsg === 'string' && errorMsg.includes("No active account found")) {
+      throw new Error("Credenciales incorrectas o la cuenta aún no está activa. Revisa tu contraseña y tu correo de confirmación.");
     }
 
     throw new Error(errorMsg);
@@ -125,6 +131,8 @@ export const api = {
       return Array.isArray(res) ? res : (res.results || []);
     },
     getMyItems: (id) => apiFetch(`/apiPedidos/Pedido/${id}/get_detalles/`),
+    cancel: (id) =>
+      apiFetch(`/apiPedidos/Pedido/${id}/cancelar/`, { method: "POST" }),
     adminGetAll: async () => {
       const res = await apiFetch("/apiPedidos/Pedido/");
       return Array.isArray(res) ? res : (res.results || []);
@@ -144,6 +152,23 @@ export const api = {
         method: "POST",
       }),
     adminGetItems: (id) => apiFetch(`/apiPedidos/Pedido/${id}/get_detalles/`),
+  },
+
+  combos: {
+    getAll: async () => {
+      const res = await apiFetch("/apiComboPedido/ReglaCombo/");
+      return Array.isArray(res) ? res : (res.results || []);
+    },
+    create: (data) =>
+      apiFetch("/apiComboPedido/ReglaCombo/", { method: "POST", body: JSON.stringify(data) }),
+    delete: (id) =>
+      apiFetch(`/apiComboPedido/ReglaCombo/${id}/`, { method: "DELETE" }),
+  },
+  categories: {
+    getAll: async () => {
+      const res = await apiFetch("/apiCategoria/Categoria/");
+      return Array.isArray(res) ? res : (res.results || []);
+    }
   },
 
   admin: {

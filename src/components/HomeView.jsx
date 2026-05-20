@@ -41,7 +41,7 @@ export const HomeView = ({ onStartShopping }) => {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative min-h-[90vh] md:h-[85vh] flex items-center justify-center overflow-hidden pt-20 pb-28 md:pt-0 md:pb-20">
+      <section className="relative min-h-[80vh] md:min-h-[85vh] flex items-center justify-center overflow-x-hidden py-16 md:py-24">
         <div className="absolute inset-0">
           <img
             src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&q=80&w=2000"
@@ -345,19 +345,19 @@ export const HomeView = ({ onStartShopping }) => {
       </section>
 
       {/* CTA Final */}
-      <section className="px-8 pb-24">
-        <div className="max-w-7xl mx-auto bg-brand-accent/10 rounded-[4rem] p-16 text-center space-y-8 relative overflow-hidden">
+      <section className="px-4 md:px-8 pb-24">
+        <div className="max-w-7xl mx-auto bg-brand-accent/10 rounded-[2rem] md:rounded-[4rem] p-8 md:p-16 text-center space-y-6 md:space-y-8 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-96 h-96 bg-brand-accent/10 blur-[120px] rounded-full" />
-          <h2 className="text-5xl font-serif font-bold text-brand-primary">
+          <h2 className="text-3xl md:text-5xl font-serif font-bold text-brand-primary leading-tight">
             ¿Listo para transformar <span className="italic">tu espacio?</span>
           </h2>
-          <p className="text-gray-600 max-w-xl mx-auto">
+          <p className="text-gray-600 max-w-xl mx-auto text-sm md:text-base leading-relaxed">
             Únete a las miles de familias que ya disfrutan de la experiencia de
             vivir en un hogar diseñado por Angela Mueblería.
           </p>
           <button
             onClick={onStartShopping}
-            className="inline-block bg-brand-primary text-white px-12 py-5 rounded-full font-bold uppercase tracking-widest hover:bg-brand-accent transition-all shadow-xl shadow-brand-primary/20"
+            className="inline-block bg-brand-primary text-white px-8 md:px-12 py-4 md:py-5 rounded-full font-bold text-xs md:text-sm uppercase tracking-widest hover:bg-brand-accent transition-all shadow-xl shadow-brand-primary/20"
           >
             Comenzar Experiencia
           </button>
