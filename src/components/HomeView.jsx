@@ -41,7 +41,7 @@ export const HomeView = ({ onStartShopping }) => {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative h-[85vh] flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[90vh] md:h-[85vh] flex items-center justify-center overflow-hidden pt-20 pb-28 md:pt-0 md:pb-20">
         <div className="absolute inset-0">
           <img
             src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&q=80&w=2000"
@@ -53,19 +53,19 @@ export const HomeView = ({ onStartShopping }) => {
           <div className="absolute inset-0 bg-gradient-to-t from-brand-primary/80 to-transparent" />
         </div>
 
-        <div className="relative z-10 text-center px-4 max-w-4xl space-y-8">
+        <div className="relative z-10 text-center px-6 max-w-4xl space-y-6 md:space-y-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <span className="text-brand-accent font-mono text-sm uppercase tracking-[0.3em] font-bold">
+            <span className="text-brand-accent font-mono text-xs md:text-sm uppercase tracking-[0.3em] font-bold">
               Artesanía que Trasciende
             </span>
-            <h1 className="text-6xl md:text-8xl font-serif font-bold text-white mt-4 leading-tight">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-serif font-bold text-white mt-4 leading-tight">
               Tradición y estilo en cada <span className="italic">Detalle</span>
             </h1>
-            <p className="text-gray-300 text-lg md:text-xl max-w-2xl mx-auto mt-6 font-light leading-relaxed">
+            <p className="text-gray-300 text-sm sm:text-base md:text-lg lg:text-xl max-w-2xl mx-auto mt-4 md:mt-6 font-light leading-relaxed">
               En Angela Mueblería, convertimos espacios ordinarios en santuarios
               de diseño y confort con piezas fabricadas a mano por maestros
               artesanos.
@@ -76,15 +76,15 @@ export const HomeView = ({ onStartShopping }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="flex flex-col md:flex-row gap-4 justify-center pt-8"
+            className="flex flex-col sm:flex-row gap-4 justify-center pt-4 md:pt-6"
           >
             <button
               onClick={onStartShopping}
-              className="bg-brand-accent text-brand-primary px-10 py-4 rounded-full font-bold text-sm uppercase tracking-widest hover:bg-white transition-all shadow-2xl flex items-center justify-center gap-2"
+              className="bg-brand-accent text-brand-primary px-8 md:px-10 py-3.5 md:py-4 rounded-full font-bold text-xs md:text-sm uppercase tracking-widest hover:bg-white transition-all shadow-2xl flex items-center justify-center gap-2"
             >
               Explorar Catálogo <ChevronRight size={18} />
             </button>
-            <button className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-10 py-4 rounded-full font-bold text-sm uppercase tracking-widest hover:bg-white/20 transition-all">
+            <button className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-8 md:px-10 py-3.5 md:py-4 rounded-full font-bold text-xs md:text-sm uppercase tracking-widest hover:bg-white/20 transition-all">
               Nuestra Historia
             </button>
           </motion.div>
