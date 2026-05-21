@@ -234,13 +234,13 @@ export const CartDropdown = ({
                                   <div className="flex items-center justify-between bg-white/70 hover:bg-white p-2 rounded-xl border border-amber-200/50 transition-all gap-3">
                                     <div className="flex items-center gap-2">
                                       <img
-                                        src={api.getImageUrl(prod.imagen_url) || `https://picsum.photos/seed/${prod.nombre}/50/50`}
+                                        src={api.getImageUrl(prod.image_url) || `https://picsum.photos/seed/${prod.name}/50/50`}
                                         className="w-8 h-8 object-cover rounded-md"
-                                        alt={prod.nombre}
+                                        alt={prod.name}
                                       />
                                       <div className="text-left">
-                                        <p className="font-bold text-gray-800 text-[11px] line-clamp-1">{prod.nombre}</p>
-                                        <p className="text-gray-500 font-medium text-[10px]">C$ {Number(prod.precio_base).toLocaleString()}</p>
+                                        <p className="font-bold text-gray-800 text-[11px] line-clamp-1">{prod.name}</p>
+                                        <p className="text-gray-500 font-medium text-[10px]">C$ {Number(prod.price).toLocaleString()}</p>
                                       </div>
                                     </div>
                                     <button
