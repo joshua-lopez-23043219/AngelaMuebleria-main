@@ -1,4 +1,7 @@
 import React, { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { X, Box, ShoppingCart, Sparkles } from "lucide-react";
+import { api } from "./services/api";
 
 // Hooks (JS Logic)
 import { useAuth } from "./hooks/useAuth";
@@ -17,6 +20,7 @@ import { HomeView } from "./components/HomeView";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState("home");
+  const [selected3dProduct, setSelected3dProduct] = useState(null);
   // Custom Hooks to separate functionality (JS) from layout (HTML)
   const auth = useAuth();
   const prod = useProducts();
@@ -96,6 +100,7 @@ export default function App() {
                     key={p.id}
                     product={p}
                     onAddToCart={cart.addToCart}
+                    onView3D={setSelected3dProduct}
                   />
                 ))}
             </div>
@@ -129,6 +134,7 @@ export default function App() {
                     key={p.id}
                     product={p}
                     onAddToCart={cart.addToCart}
+                    onView3D={setSelected3dProduct}
                   />
                 ))}
             </div>
@@ -184,6 +190,117 @@ export default function App() {
         onAddToCart={cart.addToCart}
         products={prod.products}
       />
+
+      {/* 3D Model Viewer Modal */}
+      <AnimatePresence>
+        {selected3dProduct && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            {/* Dark glassmorphism background overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelected3dProduct(null)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-md cursor-pointer"
+            />
+            {/* Modal Container */}
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 350 }}
+              className="relative bg-white w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col border border-brand-accent/10"
+            >
+              {/* Header */}
+              <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-paper/30">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-brand-accent/10 text-brand-accent rounded-xl">
+                    <Box size={20} className="animate-spin-slow" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-serif font-bold text-gray-800">
+                      {selected3dProduct.name}
+                    </h3>
+                    <p className="text-xs text-gray-500 font-medium">
+                      Vista 3D Interactiva & Realidad Aumentada (AR)
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelected3dProduct(null)}
+                  className="p-2 bg-gray-100 hover:bg-red-50 hover:text-red-500 rounded-full transition-all duration-200 cursor-pointer"
+                  title="Cerrar vista"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Body: Model Viewer */}
+              <div className="relative flex-1 bg-gray-50/50 flex flex-col items-center justify-center min-h-[380px] sm:min-h-[480px]">
+                {/* Embedded model-viewer */}
+                <model-viewer
+                  src={api.getImageUrl(selected3dProduct.model_3d_url)}
+                  alt={selected3dProduct.name}
+                  ar
+                  ar-modes="webxr scene-viewer quick-look"
+                  camera-controls
+                  auto-rotate
+                  shadow-intensity="1"
+                  shadow-softness="0.8"
+                  exposure="1.2"
+                  interaction-prompt="auto"
+                  style={{ width: "100%", height: "450px", outline: "none" }}
+                  className="w-full h-full"
+                >
+                  {/* Custom AR Button */}
+                  <button
+                    slot="ar-button"
+                    className="absolute bottom-4 right-4 bg-brand-primary text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg hover:bg-brand-accent transition-all flex items-center gap-2 border border-white/20 cursor-pointer"
+                  >
+                    <Sparkles size={14} />
+                    Ver en mi Espacio (AR)
+                  </button>
+                  
+                  {/* Loading indicator */}
+                  <div slot="poster" className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50/80 backdrop-blur-sm gap-3">
+                    <div className="w-10 h-10 border-4 border-brand-accent border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-xs font-bold text-gray-500 tracking-wider uppercase animate-pulse">Cargando Modelo 3D...</span>
+                  </div>
+                </model-viewer>
+              </div>
+
+              {/* Footer / Controls Instruction / Add to Cart CTA */}
+              <div className="p-6 bg-paper/50 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div className="text-center sm:text-left">
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Controles</p>
+                  <p className="text-xs text-gray-600 font-medium">
+                    Gira con un dedo · Zoom con dos dedos · Desplaza con dos dedos
+                  </p>
+                </div>
+                <div className="flex items-center gap-4 w-full sm:w-auto">
+                  <div className="text-right shrink-0">
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Precio Unitario</p>
+                    <p className="font-mono text-lg font-bold text-brand-accent">
+                      C${selected3dProduct.price.toLocaleString()}
+                    </p>
+                  </div>
+                  <button
+                    disabled={selected3dProduct.stock <= 0}
+                    onClick={() => {
+                      cart.addToCart(selected3dProduct);
+                      setSelected3dProduct(null);
+                    }}
+                    className="flex-1 sm:flex-none bg-brand-primary hover:bg-brand-accent text-white font-bold px-6 py-3.5 rounded-2xl text-sm transition-all duration-300 shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <ShoppingCart size={16} />
+                    Añadir al Carrito
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Footer Section */}
       <footer className="border-t border-brand-accent/10 py-12 px-8 bg-white mt-12">

@@ -24,6 +24,13 @@ export const AdminDashboard = () => {
   const admin = useAdmin();
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [clearModel3d, setClearModel3d] = useState(false);
+
+  useEffect(() => {
+    if (showForm) {
+      setClearModel3d(false);
+    }
+  }, [showForm]);
 
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [orderItems, setOrderItems] = useState([]);
@@ -198,6 +205,7 @@ export const AdminDashboard = () => {
     e.preventDefault();
     const formData = new FormData(e.target);
     const file = formData.get("image_file");
+    const file3d = formData.get("model_3d_file");
     const data = Object.fromEntries(formData.entries());
     // Convert checkbox string to boolean
     data.esta_activo = formData.get("esta_activo") === "on";
@@ -212,6 +220,17 @@ export const AdminDashboard = () => {
         data.image_url = editingProduct.image_url;
       }
       delete data.image_file;
+
+      // Manejo de modelo 3D
+      if (clearModel3d) {
+        data.model_3d_url = "";
+      } else if (file3d && file3d.size > 0) {
+        const res3d = await api.upload(file3d, 'model_3d');
+        data.model_3d_url = res3d.url;
+      } else {
+        data.model_3d_url = editingProduct?.model_3d_url || null;
+      }
+      delete data.model_3d_file;
 
       if (editingProduct) {
         await api.products.update(editingProduct.id, data);
@@ -1007,6 +1026,43 @@ export const AdminDashboard = () => {
                       className={`max-h-32 rounded-lg border object-contain ${(!editingProduct?.image_url && !document.getElementById('image-preview')?.src) ? 'hidden' : ''}`}
                     />
                   </div>
+                </div>
+
+                <div className="sm:col-span-2 w-full pt-3 border-t border-gray-100">
+                  <label className="text-[10px] text-gray-500 font-bold uppercase mb-1 block">Modelo 3D del Producto (.glb)</label>
+                  <input
+                    type="file"
+                    name="model_3d_file"
+                    accept=".glb"
+                    className="w-full px-4 py-1.5 border rounded-lg text-sm bg-white"
+                  />
+                  {editingProduct?.model_3d_url && (
+                    <div className="mt-2 flex items-center justify-between bg-gray-50 p-2.5 rounded-xl border border-gray-200">
+                      <div className="flex items-center gap-2 text-xs text-gray-600">
+                        <span className="font-semibold text-brand-primary">Modelo 3D actual:</span>
+                        <a 
+                          href={api.getImageUrl(editingProduct.model_3d_url)} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-brand-accent hover:underline font-mono truncate max-w-[180px]"
+                        >
+                          {editingProduct.model_3d_url.split('/').pop()}
+                        </a>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="checkbox"
+                          id="clear_model_3d"
+                          checked={clearModel3d}
+                          onChange={(e) => setClearModel3d(e.target.checked)}
+                          className="w-4 h-4 accent-red-600 rounded cursor-pointer"
+                        />
+                        <label htmlFor="clear_model_3d" className="text-xs text-red-600 font-bold cursor-pointer">
+                          Quitar modelo 3D
+                        </label>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="sm:col-span-2 flex flex-col sm:flex-row gap-4 mt-4">
                   <button
