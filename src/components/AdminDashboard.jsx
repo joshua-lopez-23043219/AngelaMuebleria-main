@@ -47,7 +47,7 @@ export const AdminDashboard = () => {
     tipo_regalo: "mesa",
     categoria_regalo: "",
     cantidad_regalo: 1,
-    esta_activo: true,
+    activo: true,
   });
 
   const loadCombosData = async () => {
@@ -85,7 +85,7 @@ export const AdminDashboard = () => {
         tipo_regalo: newCombo.tipo_regalo,
         categoria_regalo: newCombo.categoria_regalo ? parseInt(newCombo.categoria_regalo) : null,
         cantidad_regalo: parseInt(newCombo.cantidad_regalo),
-        esta_activo: newCombo.esta_activo,
+        activo: newCombo.activo,
       };
       await api.combos.create(payload);
       alert("Combo creado exitosamente.");
@@ -97,7 +97,7 @@ export const AdminDashboard = () => {
         tipo_regalo: "mesa",
         categoria_regalo: "",
         cantidad_regalo: 1,
-        esta_activo: true,
+        activo: true,
       });
       loadCombosData();
     } catch (e) {
@@ -834,12 +834,12 @@ export const AdminDashboard = () => {
                   <div className="flex items-center gap-2 px-1">
                     <input
                       type="checkbox"
-                      id="esta_activo_combo"
-                      checked={newCombo.esta_activo}
-                      onChange={(e) => setNewCombo({ ...newCombo, esta_activo: e.target.checked })}
+                      id="activo_combo"
+                      checked={newCombo.activo}
+                      onChange={(e) => setNewCombo({ ...newCombo, activo: e.target.checked })}
                       className="w-4 h-4 accent-brand-accent rounded cursor-pointer"
                     />
-                    <label htmlFor="esta_activo_combo" className="text-xs font-medium text-gray-600 cursor-pointer select-none">
+                    <label htmlFor="activo_combo" className="text-xs font-medium text-gray-600 cursor-pointer select-none">
                       Regla Activa
                     </label>
                   </div>
@@ -868,8 +868,8 @@ export const AdminDashboard = () => {
                         <div className="space-y-2">
                           <div className="flex justify-between items-start">
                             <h4 className="font-serif font-bold text-base text-brand-primary">{c.nombre}</h4>
-                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${c.esta_activo ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
-                              {c.esta_activo ? 'Activo' : 'Inactivo'}
+                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${c.activo ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
+                              {c.activo ? 'Activo' : 'Inactivo'}
                             </span>
                           </div>
 

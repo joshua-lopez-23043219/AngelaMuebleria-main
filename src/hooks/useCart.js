@@ -68,7 +68,7 @@ export function useCart(user) {
       let countRequired = 0;
       cart.forEach(item => {
         const matchesType = !regla.tipo_requerido || item.type === regla.tipo_requerido;
-        const matchesCategory = !regla.categoria_requerida || item.category === regla.categoria_requerida_nombre;
+        const matchesCategory = !regla.categoria_requerida || (item.category || item.category_read) === regla.categoria_requerida_nombre;
         if (matchesType && matchesCategory) {
           countRequired += item.quantity;
         }
@@ -80,7 +80,7 @@ export function useCart(user) {
         let candidates = [];
         cart.forEach(item => {
           const matchesType = !regla.tipo_regalo || item.type === regla.tipo_regalo;
-          const matchesCategory = !regla.categoria_regalo || item.category === regla.categoria_regalo_nombre;
+          const matchesCategory = !regla.categoria_regalo || (item.category || item.category_read) === regla.categoria_regalo_nombre;
           if (matchesType && matchesCategory) {
             candidates.push(item);
           }

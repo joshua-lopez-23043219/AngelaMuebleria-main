@@ -55,7 +55,7 @@ export const ProductCard = ({
         </p>
         <div className="flex justify-between items-center pt-2">
           <span className="text-[10px] uppercase tracking-wider font-bold text-gray-400">
-            {product.category}
+            {product.category || product.category_read}
           </span>
           <span
             className={cn(

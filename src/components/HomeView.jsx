@@ -41,7 +41,7 @@ export const HomeView = ({ onStartShopping }) => {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative min-h-[80vh] md:min-h-[85vh] flex items-center justify-center overflow-x-hidden py-16 md:py-24">
+      <section className="relative min-h-[90vh] md:min-h-[95vh] flex items-center justify-center overflow-x-hidden pt-24 pb-32 md:pt-32 md:pb-40">
         <div className="absolute inset-0">
           <img
             src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&q=80&w=2000"
@@ -92,7 +92,7 @@ export const HomeView = ({ onStartShopping }) => {
       </section>
 
       {/* Stats Section */}
-      <section className="-mt-16 relative z-20 max-w-7xl mx-auto w-full px-8">
+      <section className="-mt-12 md:-mt-16 relative z-20 max-w-7xl mx-auto w-full px-6 md:px-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-0 bg-white shadow-2xl rounded-[2rem] overflow-hidden border border-brand-accent/10 divide-y sm:divide-y-0 md:divide-x divide-brand-accent/10">
           {stats.map((stat, i) => (
             <div
