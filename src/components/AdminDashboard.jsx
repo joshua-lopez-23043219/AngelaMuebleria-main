@@ -41,12 +41,10 @@ export const AdminDashboard = () => {
   const [loadingCombos, setLoadingCombos] = useState(false);
   const [newCombo, setNewCombo] = useState({
     nombre: "",
-    tipo_requerido: "silla",
-    categoria_requerida: "",
+    producto_requerido: "",
     cantidad_requerida: 4,
-    tipo_regalo: "mesa",
-    categoria_regalo: "",
-    cantidad_regalo: 1,
+    producto_asociado: "",
+    cantidad_asociado: 1,
     activo: true,
     precio_combo: "",
   });
@@ -77,28 +75,36 @@ export const AdminDashboard = () => {
       alert("Por favor ingresa un nombre para el combo.");
       return;
     }
+    if (!newCombo.producto_requerido) {
+      alert("Por favor selecciona el producto requerido.");
+      return;
+    }
+    if (!newCombo.producto_asociado) {
+      alert("Por favor selecciona el producto asociado.");
+      return;
+    }
+    if (!newCombo.precio_combo) {
+      alert("Por favor ingresa el precio para el combo.");
+      return;
+    }
     try {
       const payload = {
         nombre: newCombo.nombre,
-        tipo_requerido: newCombo.tipo_requerido,
-        categoria_requerida: newCombo.categoria_requerida ? parseInt(newCombo.categoria_requerida) : null,
+        producto_requerido: parseInt(newCombo.producto_requerido),
         cantidad_requerida: parseInt(newCombo.cantidad_requerida),
-        tipo_regalo: newCombo.tipo_regalo,
-        categoria_regalo: newCombo.categoria_regalo ? parseInt(newCombo.categoria_regalo) : null,
-        cantidad_regalo: parseInt(newCombo.cantidad_regalo),
+        producto_asociado: parseInt(newCombo.producto_asociado),
+        cantidad_asociado: parseInt(newCombo.cantidad_asociado),
         activo: newCombo.activo,
-        precio_combo: newCombo.precio_combo ? parseFloat(newCombo.precio_combo) : null,
+        precio_combo: parseFloat(newCombo.precio_combo),
       };
       await api.combos.create(payload);
       alert("Combo creado exitosamente.");
       setNewCombo({
         nombre: "",
-        tipo_requerido: "silla",
-        categoria_requerida: "",
+        producto_requerido: "",
         cantidad_requerida: 4,
-        tipo_regalo: "mesa",
-        categoria_regalo: "",
-        cantidad_regalo: 1,
+        producto_asociado: "",
+        cantidad_asociado: 1,
         activo: true,
         precio_combo: "",
       });
@@ -746,102 +752,75 @@ export const AdminDashboard = () => {
 
                   <div className="p-3 bg-paper/50 rounded-xl space-y-3 border">
                     <h4 className="text-xs font-bold uppercase tracking-wider text-brand-primary">Condición (Requisito)</h4>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-2">
                       <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-gray-400 uppercase">Tipo</label>
+                        <label className="text-[10px] font-bold text-gray-400 uppercase">Mueble Requerido</label>
                         <select
-                          value={newCombo.tipo_requerido}
-                          onChange={(e) => setNewCombo({ ...newCombo, tipo_requerido: e.target.value })}
+                          value={newCombo.producto_requerido}
+                          onChange={(e) => setNewCombo({ ...newCombo, producto_requerido: e.target.value })}
                           className="w-full px-2 py-1.5 border rounded-lg text-xs"
+                          required
                         >
-                          <option value="silla">Silla</option>
-                          <option value="mesa">Mesa</option>
-                          <option value="sofa">Sofá</option>
-                          <option value="cama">Cama</option>
-                          <option value="armario">Armario</option>
-                          <option value="otro">Otro</option>
+                          <option value="">Selecciona un mueble...</option>
+                          {(admin.products || []).map(p => (
+                            <option key={p.id} value={p.id}>[{p.codigo_producto}] {p.nombre}</option>
+                          ))}
                         </select>
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-gray-400 uppercase">Cantidad</label>
+                        <label className="text-[10px] font-bold text-gray-400 uppercase">Cantidad Necesaria</label>
                         <input
                           type="number"
                           min="1"
                           value={newCombo.cantidad_requerida}
                           onChange={(e) => setNewCombo({ ...newCombo, cantidad_requerida: e.target.value })}
                           className="w-full px-2 py-1.5 border rounded-lg text-xs"
+                          required
                         />
                       </div>
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase">Categoría Específica (Opcional)</label>
-                      <select
-                        value={newCombo.categoria_requerida}
-                        onChange={(e) => setNewCombo({ ...newCombo, categoria_requerida: e.target.value })}
-                        className="w-full px-2 py-1.5 border rounded-lg text-xs"
-                      >
-                        <option value="">Cualquiera</option>
-                        {categoriesList.map((cat) => (
-                          <option key={cat.id} value={cat.id}>{cat.nombre}</option>
-                        ))}
-                      </select>
                     </div>
                   </div>
 
                   <div className="p-3 bg-brand-accent/5 rounded-xl space-y-3 border border-brand-accent/20">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-brand-accent">Regalía (Gratis)</h4>
-                    <div className="grid grid-cols-2 gap-2">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-brand-accent">Mueble Asociado (Para completar el Combo)</h4>
+                    <div className="space-y-2">
                       <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-gray-400 uppercase">Tipo Regalo</label>
+                        <label className="text-[10px] font-bold text-gray-400 uppercase">Mueble Asociado</label>
                         <select
-                          value={newCombo.tipo_regalo}
-                          onChange={(e) => setNewCombo({ ...newCombo, tipo_regalo: e.target.value })}
+                          value={newCombo.producto_asociado}
+                          onChange={(e) => setNewCombo({ ...newCombo, producto_asociado: e.target.value })}
                           className="w-full px-2 py-1.5 border rounded-lg text-xs"
+                          required
                         >
-                          <option value="mesa">Mesa</option>
-                          <option value="silla">Silla</option>
-                          <option value="sofa">Sofá</option>
-                          <option value="cama">Cama</option>
-                          <option value="armario">Armario</option>
-                          <option value="otro">Otro</option>
+                          <option value="">Selecciona un mueble...</option>
+                          {(admin.products || []).map(p => (
+                            <option key={p.id} value={p.id}>[{p.codigo_producto}] {p.nombre}</option>
+                          ))}
                         </select>
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-gray-400 uppercase">Cantidad Regalo</label>
+                        <label className="text-[10px] font-bold text-gray-400 uppercase">Cantidad Necesaria</label>
                         <input
                           type="number"
                           min="1"
-                          value={newCombo.cantidad_regalo}
-                          onChange={(e) => setNewCombo({ ...newCombo, cantidad_regalo: e.target.value })}
+                          value={newCombo.cantidad_asociado}
+                          onChange={(e) => setNewCombo({ ...newCombo, cantidad_asociado: e.target.value })}
                           className="w-full px-2 py-1.5 border rounded-lg text-xs"
+                          required
                         />
                       </div>
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase">Categoría Regalo (Opcional)</label>
-                      <select
-                        value={newCombo.categoria_regalo}
-                        onChange={(e) => setNewCombo({ ...newCombo, categoria_regalo: e.target.value })}
-                        className="w-full px-2 py-1.5 border rounded-lg text-xs"
-                      >
-                        <option value="">Cualquiera</option>
-                        {categoriesList.map((cat) => (
-                          <option key={cat.id} value={cat.id}>{cat.nombre}</option>
-                        ))}
-                      </select>
                     </div>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase">Precio del Combo (Opcional - ej: 9500)</label>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase">Precio del Combo Completo</label>
                     <input
                       type="number"
-                      placeholder="Dejar vacío para regalo gratis"
+                      placeholder="Ej. 9500"
                       value={newCombo.precio_combo}
                       onChange={(e) => setNewCombo({ ...newCombo, precio_combo: e.target.value })}
                       className="w-full px-2 py-1.5 border rounded-lg text-xs"
+                      required
                     />
                   </div>
 
@@ -889,12 +868,10 @@ export const AdminDashboard = () => {
 
                           <div className="text-xs text-gray-500 space-y-1">
                             <p>
-                              👉 Compra: <span className="font-bold text-gray-700">{c.cantidad_requerida} {c.tipo_requerido}(s)</span>
-                              {c.categoria_requerida_nombre && <span> de la categoría <span className="font-bold text-brand-accent">{c.categoria_requerida_nombre}</span></span>}
+                              👉 Compra: <span className="font-bold text-gray-700">{c.cantidad_requerida}x {c.producto_requerido_nombre}</span>
                             </p>
                              <p>
-                              🎁 Regalo: <span className="font-bold text-green-600">{c.cantidad_regalo} {c.tipo_regalo}(s)</span>
-                              {c.categoria_regalo_nombre && <span> de la categoría <span className="font-bold text-brand-accent">{c.categoria_regalo_nombre}</span></span>}
+                              🤝 Asociado: <span className="font-bold text-brand-primary">{c.cantidad_asociado}x {c.producto_asociado_nombre}</span>
                             </p>
                             {c.precio_combo && (
                               <p>

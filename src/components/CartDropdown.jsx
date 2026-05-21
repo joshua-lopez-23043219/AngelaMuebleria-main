@@ -208,14 +208,11 @@ export const CartDropdown = ({
                     <div className="space-y-3 border-b border-brand-accent/5 pb-2 mb-2">
                       {comboDiscounts.map((combo, idx) => {
                         if (combo.promptAddGift) {
-                          // Buscar productos que coincidan con la categoría/tipo de regalo del combo
-                          const suggested = (products || []).filter(p => {
-                            if ((Number(p.stock) || 0) <= 0) return false;
-                            if (p.esta_activo === false) return false;
-                            const matchesType = !combo.tipo_regalo || p.tipo_producto === combo.tipo_regalo;
-                            const matchesCategory = !combo.categoria_regalo_nombre || p.category_read === combo.categoria_regalo_nombre;
-                            return matchesType && matchesCategory;
-                          });
+                          // Buscar el producto asociado específico
+                          const prod = (products || []).find(p => p.id === combo.producto_asociado_id);
+                          if (!prod || (Number(prod.stock) || 0) <= 0 || prod.esta_activo === false) {
+                            return null;
+                          }
 
                           return (
                             <div key={idx} className="bg-amber-50/90 border border-amber-200 rounded-2xl p-4 text-xs text-amber-900 space-y-3 shadow-sm">
@@ -226,43 +223,39 @@ export const CartDropdown = ({
                                 <p className="text-gray-600 leading-relaxed">
                                   {combo.precio_combo && Number(combo.precio_combo) > 0 
                                     ? `Lleva el combo completo por solo C$ ${Number(combo.precio_combo).toLocaleString()} en lugar de su precio regular.`
-                                    : `Agrega ${combo.giftsAllowed} artículo(s) de regalo para llevártelos gratis.`
+                                    : `Agrega ${combo.cantidad_asociado}x ${combo.producto_asociado_nombre} para activar la promo.`
                                   }
                                 </p>
                               </div>
                               
-                              {suggested.length > 0 && (
-                                <div className="space-y-2 pt-1 border-t border-amber-200/40">
-                                  <p className="font-semibold text-amber-800 uppercase tracking-wider text-[9px]">Añade uno para activar la promo:</p>
-                                  <div className="max-h-36 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
-                                    {suggested.map((prod) => (
-                                      <div key={prod.id} className="flex items-center justify-between bg-white/70 hover:bg-white p-2 rounded-xl border border-amber-200/50 transition-all gap-3">
-                                        <div className="flex items-center gap-2">
-                                          <img
-                                            src={api.getImageUrl(prod.imagen_url) || `https://picsum.photos/seed/${prod.nombre}/50/50`}
-                                            className="w-8 h-8 object-cover rounded-md"
-                                            alt={prod.nombre}
-                                          />
-                                          <div className="text-left">
-                                            <p className="font-bold text-gray-800 text-[11px] line-clamp-1">{prod.nombre}</p>
-                                            <p className="text-gray-500 font-medium text-[10px]">C$ {Number(prod.precio_base).toLocaleString()}</p>
-                                          </div>
-                                        </div>
-                                        <button
-                                          onClick={() => {
-                                            if (onAddToCart) {
-                                              onAddToCart(prod);
-                                            }
-                                          }}
-                                          className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-2.5 py-1 rounded-lg text-[10px] transition-all whitespace-nowrap shadow-sm hover:shadow"
-                                        >
-                                          + Añadir
-                                        </button>
+                              <div className="space-y-2 pt-1 border-t border-amber-200/40">
+                                <p className="font-semibold text-amber-800 uppercase tracking-wider text-[9px]">Añade uno para activar la promo:</p>
+                                <div className="space-y-2">
+                                  <div className="flex items-center justify-between bg-white/70 hover:bg-white p-2 rounded-xl border border-amber-200/50 transition-all gap-3">
+                                    <div className="flex items-center gap-2">
+                                      <img
+                                        src={api.getImageUrl(prod.imagen_url) || `https://picsum.photos/seed/${prod.nombre}/50/50`}
+                                        className="w-8 h-8 object-cover rounded-md"
+                                        alt={prod.nombre}
+                                      />
+                                      <div className="text-left">
+                                        <p className="font-bold text-gray-800 text-[11px] line-clamp-1">{prod.nombre}</p>
+                                        <p className="text-gray-500 font-medium text-[10px]">C$ {Number(prod.precio_base).toLocaleString()}</p>
                                       </div>
-                                    ))}
+                                    </div>
+                                    <button
+                                      onClick={() => {
+                                        if (onAddToCart) {
+                                          onAddToCart(prod);
+                                        }
+                                      }}
+                                      className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-2.5 py-1 rounded-lg text-[10px] transition-all whitespace-nowrap shadow-sm hover:shadow"
+                                    >
+                                      + Añadir
+                                    </button>
                                   </div>
                                 </div>
-                              )}
+                              </div>
                             </div>
                           );
                         } else {
