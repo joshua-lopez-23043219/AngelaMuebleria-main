@@ -48,6 +48,7 @@ export const AdminDashboard = () => {
     categoria_regalo: "",
     cantidad_regalo: 1,
     activo: true,
+    precio_combo: "",
   });
 
   const loadCombosData = async () => {
@@ -86,6 +87,7 @@ export const AdminDashboard = () => {
         categoria_regalo: newCombo.categoria_regalo ? parseInt(newCombo.categoria_regalo) : null,
         cantidad_regalo: parseInt(newCombo.cantidad_regalo),
         activo: newCombo.activo,
+        precio_combo: newCombo.precio_combo ? parseFloat(newCombo.precio_combo) : null,
       };
       await api.combos.create(payload);
       alert("Combo creado exitosamente.");
@@ -98,6 +100,7 @@ export const AdminDashboard = () => {
         categoria_regalo: "",
         cantidad_regalo: 1,
         activo: true,
+        precio_combo: "",
       });
       loadCombosData();
     } catch (e) {
@@ -831,6 +834,17 @@ export const AdminDashboard = () => {
                     </div>
                   </div>
 
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase">Precio del Combo (Opcional - ej: 9500)</label>
+                    <input
+                      type="number"
+                      placeholder="Dejar vacío para regalo gratis"
+                      value={newCombo.precio_combo}
+                      onChange={(e) => setNewCombo({ ...newCombo, precio_combo: e.target.value })}
+                      className="w-full px-2 py-1.5 border rounded-lg text-xs"
+                    />
+                  </div>
+
                   <div className="flex items-center gap-2 px-1">
                     <input
                       type="checkbox"
@@ -878,10 +892,15 @@ export const AdminDashboard = () => {
                               👉 Compra: <span className="font-bold text-gray-700">{c.cantidad_requerida} {c.tipo_requerido}(s)</span>
                               {c.categoria_requerida_nombre && <span> de la categoría <span className="font-bold text-brand-accent">{c.categoria_requerida_nombre}</span></span>}
                             </p>
-                            <p>
+                             <p>
                               🎁 Regalo: <span className="font-bold text-green-600">{c.cantidad_regalo} {c.tipo_regalo}(s)</span>
                               {c.categoria_regalo_nombre && <span> de la categoría <span className="font-bold text-brand-accent">{c.categoria_regalo_nombre}</span></span>}
                             </p>
+                            {c.precio_combo && (
+                              <p>
+                                💰 Precio Combo: <span className="font-bold text-brand-accent">C${Number(c.precio_combo).toLocaleString()}</span>
+                              </p>
+                            )}
                           </div>
                         </div>
 

@@ -62,68 +62,156 @@ export function useCart(user) {
   let comboDiscounts = [];
   let comboDiscountTotal = 0;
 
+  // Copia de cantidades para simular asignaciones de combos y evitar doble conteo
+  let tempQuantities = {};
+  cart.forEach(item => {
+    tempQuantities[item.id] = item.quantity;
+  });
+
   if (combos.length > 0 && cart.length > 0) {
     combos.forEach(regla => {
-      // Contar cuántos items cumplen el requerimiento
-      let countRequired = 0;
+      // Determinar activaciones posibles de la regla
+      let totalReqAvailable = 0;
       cart.forEach(item => {
+        const qty = tempQuantities[item.id] || 0;
+        if (qty <= 0) return;
         const matchesType = !regla.tipo_requerido || item.type === regla.tipo_requerido;
         const matchesCategory = !regla.categoria_requerida || (item.category || item.category_read) === regla.categoria_requerida_nombre;
         if (matchesType && matchesCategory) {
-          countRequired += item.quantity;
+          totalReqAvailable += qty;
         }
       });
 
-      const timesActivated = Math.floor(countRequired / regla.cantidad_requerida);
-      if (timesActivated > 0) {
-        // Buscar productos de regalo elegibles en el carrito
-        let candidates = [];
+      const timesActivatedLimit = Math.floor(totalReqAvailable / regla.cantidad_requerida);
+      if (timesActivatedLimit <= 0) return;
+
+      let timesActivated = 0;
+      let ruleDiscountTotal = 0;
+      let totalGiftsGiven = 0;
+
+      for (let step = 0; step < timesActivatedLimit; step++) {
+        // Intentar consumir requeridos
+        let reqConsumed = [];
+        let reqCandidates = [];
         cart.forEach(item => {
-          const matchesType = !regla.tipo_regalo || item.type === regla.tipo_regalo;
-          const matchesCategory = !regla.categoria_regalo || (item.category || item.category_read) === regla.categoria_regalo_nombre;
-          if (matchesType && matchesCategory) {
-            candidates.push(item);
+          const qty = tempQuantities[item.id] || 0;
+          if (qty > 0) {
+            const matchesType = !regla.tipo_requerido || item.type === regla.tipo_requerido;
+            const matchesCategory = !regla.categoria_requerida || (item.category || item.category_read) === regla.categoria_requerida_nombre;
+            if (matchesType && matchesCategory) {
+              reqCandidates.push({
+                id: item.id,
+                price: item.price,
+                qtyAvailable: qty
+              });
+            }
           }
         });
+        // Ordenar requeridos de menor a mayor precio
+        reqCandidates.sort((a, b) => a.price - b.price);
 
-        // Ordenar candidatos por precio de menor a mayor
-        candidates.sort((a, b) => a.price - b.price);
+        let accumulatedReq = 0;
+        let stepUpdates = {};
+        for (let rc of reqCandidates) {
+          if (accumulatedReq >= regla.cantidad_requerida) break;
+          const needed = regla.cantidad_requerida - accumulatedReq;
+          const currentAllocated = stepUpdates[rc.id] || 0;
+          const take = Math.min(rc.qtyAvailable - currentAllocated, needed);
+          if (take > 0) {
+            stepUpdates[rc.id] = currentAllocated + take;
+            accumulatedReq += take;
+            reqConsumed.push({ id: rc.id, price: rc.price, qty: take });
+          }
+        }
 
-        const giftsAllowed = timesActivated * regla.cantidad_regalo;
-        let giftsGiven = 0;
+        if (accumulatedReq < regla.cantidad_requerida) break;
 
-        candidates.forEach(cand => {
-          if (giftsGiven >= giftsAllowed) return;
-          const available = cand.quantity;
-          const discountQty = Math.min(available, giftsAllowed - giftsGiven);
-          comboDiscountTotal += cand.price * discountQty;
-          giftsGiven += discountQty;
+        // Intentar consumir regalos
+        let giftConsumed = [];
+        let giftCandidates = [];
+        cart.forEach(item => {
+          const qty = (tempQuantities[item.id] || 0) - (stepUpdates[item.id] || 0);
+          if (qty > 0) {
+            const matchesType = !regla.tipo_regalo || item.type === regla.tipo_regalo;
+            const matchesCategory = !regla.categoria_regalo || (item.category || item.category_read) === regla.categoria_regalo_nombre;
+            if (matchesType && matchesCategory) {
+              giftCandidates.push({
+                id: item.id,
+                price: item.price,
+                qtyAvailable: qty
+              });
+            }
+          }
+        });
+        giftCandidates.sort((a, b) => a.price - b.price);
+
+        let accumulatedGift = 0;
+        for (let gc of giftCandidates) {
+          if (accumulatedGift >= regla.cantidad_regalo) break;
+          const needed = regla.cantidad_regalo - accumulatedGift;
+          const take = Math.min(gc.qtyAvailable, needed);
+          if (take > 0) {
+            stepUpdates[gc.id] = (stepUpdates[gc.id] || 0) + take;
+            accumulatedGift += take;
+            giftConsumed.push({ id: gc.id, price: gc.price, qty: take });
+          }
+        }
+
+        if (accumulatedGift < regla.cantidad_regalo) {
+          // El combo está activo pero el regalo/segundo item no está en el carrito
+          // Para esta iteración no podemos aplicar el descuento del combo.
+          break;
+        }
+
+        // Si llegamos aquí, la iteración es exitosa! Consolidar asignación
+        Object.keys(stepUpdates).forEach(id => {
+          tempQuantities[id] -= stepUpdates[id];
         });
 
-        if (giftsGiven > 0) {
-          comboDiscounts.push({
-            id: regla.id,
-            nombre: regla.nombre,
-            monto: comboDiscountTotal,
-            giftsGiven,
-            giftsAllowed,
-            tipo_regalo: regla.tipo_regalo,
-            categoria_regalo_nombre: regla.categoria_regalo_nombre,
-            promptAddGift: false
-          });
+        // Calcular precio normal total
+        let normalSum = 0;
+        reqConsumed.forEach(r => normalSum += r.price * r.qty);
+        giftConsumed.forEach(g => normalSum += g.price * g.qty);
+
+        // Calcular descuento
+        let discountThisTime = 0;
+        if (regla.precio_combo && Number(regla.precio_combo) > 0) {
+          discountThisTime = normalSum - Number(regla.precio_combo);
         } else {
-          // El combo está activo pero no tiene el regalo en el carrito
-          comboDiscounts.push({
-            id: regla.id,
-            nombre: regla.nombre,
-            monto: 0,
-            giftsGiven: 0,
-            giftsAllowed,
-            tipo_regalo: regla.tipo_regalo,
-            categoria_regalo_nombre: regla.categoria_regalo_nombre,
-            promptAddGift: true
-          });
+          giftConsumed.forEach(g => discountThisTime += g.price * g.qty);
         }
+
+        if (discountThisTime > 0) {
+          ruleDiscountTotal += discountThisTime;
+        }
+        totalGiftsGiven += accumulatedGift;
+        timesActivated++;
+      }
+
+      if (timesActivated > 0) {
+        comboDiscountTotal += ruleDiscountTotal;
+        comboDiscounts.push({
+          id: regla.id,
+          nombre: regla.nombre,
+          monto: ruleDiscountTotal,
+          giftsGiven: totalGiftsGiven,
+          giftsAllowed: timesActivated * regla.cantidad_regalo,
+          tipo_regalo: regla.tipo_regalo,
+          categoria_regalo_nombre: regla.categoria_regalo_nombre,
+          promptAddGift: false
+        });
+      } else {
+        // No se pudo activar ninguna instancia completa (falta el regalo en el carrito)
+        comboDiscounts.push({
+          id: regla.id,
+          nombre: regla.nombre,
+          monto: 0,
+          giftsGiven: 0,
+          giftsAllowed: timesActivatedLimit * regla.cantidad_regalo,
+          tipo_regalo: regla.tipo_regalo,
+          categoria_regalo_nombre: regla.categoria_regalo_nombre,
+          promptAddGift: true
+        });
       }
     });
   }
