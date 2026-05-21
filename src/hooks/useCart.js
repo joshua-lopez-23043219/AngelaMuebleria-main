@@ -198,6 +198,7 @@ export function useCart(user) {
           giftsAllowed: timesActivated * regla.cantidad_regalo,
           tipo_regalo: regla.tipo_regalo,
           categoria_regalo_nombre: regla.categoria_regalo_nombre,
+          precio_combo: regla.precio_combo,
           promptAddGift: false
         });
       } else {
@@ -210,6 +211,7 @@ export function useCart(user) {
           giftsAllowed: timesActivatedLimit * regla.cantidad_regalo,
           tipo_regalo: regla.tipo_regalo,
           categoria_regalo_nombre: regla.categoria_regalo_nombre,
+          precio_combo: regla.precio_combo,
           promptAddGift: true
         });
       }

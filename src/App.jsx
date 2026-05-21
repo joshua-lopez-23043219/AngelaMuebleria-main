@@ -181,6 +181,8 @@ export default function App() {
         onClearDiscount={cart.clearDiscount}
         comboDiscounts={cart.comboDiscounts}
         comboDiscountTotal={cart.comboDiscountTotal}
+        onAddToCart={cart.addToCart}
+        products={prod.products}
       />
 
       {/* Footer Section */}
