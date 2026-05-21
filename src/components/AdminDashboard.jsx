@@ -763,7 +763,7 @@ export const AdminDashboard = () => {
                         >
                           <option value="">Selecciona un mueble...</option>
                           {(admin.products || []).map(p => (
-                            <option key={p.id} value={p.id}>[{p.codigo_producto}] {p.nombre}</option>
+                            <option key={p.id} value={p.id}>{p.code ? `[${p.code}] ` : ''}{p.name}</option>
                           ))}
                         </select>
                       </div>
@@ -794,7 +794,7 @@ export const AdminDashboard = () => {
                         >
                           <option value="">Selecciona un mueble...</option>
                           {(admin.products || []).map(p => (
-                            <option key={p.id} value={p.id}>[{p.codigo_producto}] {p.nombre}</option>
+                            <option key={p.id} value={p.id}>{p.code ? `[${p.code}] ` : ''}{p.name}</option>
                           ))}
                         </select>
                       </div>
