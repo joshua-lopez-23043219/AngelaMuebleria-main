@@ -1,22 +1,78 @@
-import React, { useState } from "react";
-import { motion } from "motion/react";
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   Award,
   Heart,
   History,
   Target,
   Eye,
+  ChevronLeft,
   ChevronRight,
   Clock,
   Lightbulb,
   Users,
-  Gift
+  Gift,
+  Sparkles,
+  ShoppingBag
 } from "lucide-react";
 import { api } from "../services/api";
 
-export const HomeView = ({ onStartShopping }) => {
+export const HomeView = ({ onStartShopping, onAddToCart }) => {
   const [email, setEmail] = useState("");
   const [newsStatus, setNewsStatus] = useState("idle");
+  const [combos, setCombos] = useState([]);
+  const [loadingCombos, setLoadingCombos] = useState(true);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    const fetchActiveCombos = async () => {
+      try {
+        const data = await api.combos.getAll();
+        setCombos(data.filter(c => c.activo && (c.productos_detalle?.length > 0 || c.producto_requerido)));
+      } catch (e) {
+        console.error("Error loading active combos in HomeView:", e);
+      } finally {
+        setLoadingCombos(false);
+      }
+    };
+    fetchActiveCombos();
+  }, []);
+
+  const handlePrevCombo = () => {
+    setCurrentIndex(prev => (prev === 0 ? combos.length - 1 : prev - 1));
+  };
+
+  const handleNextCombo = () => {
+    setCurrentIndex(prev => (prev === combos.length - 1 ? 0 : prev + 1));
+  };
+
+  const handleAddComboToCart = (combo) => {
+    if (!onAddToCart) return;
+    const details = combo.productos_detalle || [];
+    if (details.length > 0) {
+      details.forEach(item => {
+        const productToAdd = {
+          id: item.id,
+          name: item.nombre,
+          price: item.precio_base,
+          image_url: item.url_miniatura,
+          stock: 99
+        };
+        for (let i = 0; i < item.cantidad; i++) {
+          onAddToCart(productToAdd);
+        }
+      });
+      alert(`¡Se han añadido los elementos del combo "${combo.nombre}" al carrito!`);
+    } else if (combo.producto_requerido) {
+      onAddToCart({
+        id: combo.producto_requerido,
+        name: combo.producto_requerido_nombre,
+        price: combo.precio_combo || 0,
+        image_url: null,
+        stock: 99
+      });
+    }
+  };
 
   const handleSubscribe = async (e) => {
     e.preventDefault();
@@ -269,80 +325,165 @@ export const HomeView = ({ onStartShopping }) => {
         </div>
       </section>
 
-      {/* Newsletter Banner */}
-      <section className="px-8 pb-12">
-        <div className="max-w-7xl mx-auto relative overflow-hidden rounded-[2.5rem] shadow-2xl shadow-brand-primary/20">
-          {/* Background layers */}
-          <div className="absolute inset-0 bg-brand-primary" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_#c5a05930_0%,_transparent_60%)]" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_#c5a05918_0%,_transparent_60%)]" />
-          {/* Decorative ring */}
-          <div className="absolute -right-16 -top-16 w-72 h-72 rounded-full border border-brand-accent/10" />
-          <div className="absolute -right-8 -top-8 w-48 h-48 rounded-full border border-brand-accent/20" />
-
-          <div className="relative z-10 flex flex-col lg:flex-row items-center gap-10 p-10 md:p-14">
-            {/* Icon */}
-            <div className="shrink-0 w-20 h-20 rounded-2xl bg-brand-accent/10 border border-brand-accent/30 flex items-center justify-center">
-              <Gift size={40} strokeWidth={1.5} className="text-brand-accent" />
-            </div>
-
-            {/* Copy */}
-            <div className="flex-1 space-y-2 text-center lg:text-left">
-              <span className="text-brand-accent font-mono text-xs uppercase tracking-[0.3em] font-bold">
-                Promociones Exclusivas
-              </span>
-              <h3 className="text-3xl md:text-4xl font-serif font-bold text-white leading-tight">
-                ¡Recibe descuentos antes <span className="italic text-brand-accent">que nadie!</span>
-              </h3>
-              <p className="text-white/50 font-light text-sm max-w-md">
-                Suscríbete y obtén al instante tu cupón de bienvenida para estrenar en tu próxima compra.
-              </p>
-            </div>
-
-            {/* Form / Success */}
-            <div className="w-full lg:w-auto shrink-0">
-              {newsStatus === "success" ? (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="bg-brand-accent/10 border border-brand-accent/40 px-8 py-6 rounded-2xl text-center space-y-2"
-                >
-                  <p className="text-brand-accent font-bold text-lg">¡Suscripción exitosa! 🎉</p>
-                  <p className="text-white/70 text-sm">Tu código de descuento:</p>
-                  <div className="bg-brand-accent text-brand-primary px-6 py-2 rounded-xl font-mono font-bold tracking-[0.3em] text-xl shadow-lg">
-                    BIENVENIDO10
-                  </div>
-                  <p className="text-white/50 text-xs">10% de descuento en tu primer pedido</p>
-                </motion.div>
-              ) : (
-                <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3">
-                  <div className="relative">
-                    <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-accent/60 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                    <input
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="tu@correo.com"
-                      className="pl-11 pr-5 py-4 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 w-full sm:w-72 focus:outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/30 transition-all"
-                      disabled={newsStatus === "loading"}
-                    />
-                  </div>
+      {/* Active Promo Combos Carousel */}
+      {!loadingCombos && combos.length > 0 && (
+        <section className="px-8 pb-16">
+          <div className="max-w-7xl mx-auto relative overflow-hidden rounded-[2.5rem] bg-brand-primary p-8 md:p-14 shadow-2xl shadow-brand-primary/20">
+            {/* Background layers */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_#c5a05925_0%,_transparent_60%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_#c5a05912_0%,_transparent_60%)]" />
+            
+            {/* Header */}
+            <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
+              <div className="space-y-2">
+                <span className="text-brand-accent font-mono text-xs uppercase tracking-[0.3em] font-bold flex items-center gap-1.5">
+                  <Sparkles size={14} className="animate-pulse" /> Promociones Exclusivas
+                </span>
+                <h3 className="text-3xl md:text-4xl font-serif font-bold text-white leading-tight">
+                  Ahorra con nuestros <span className="italic text-brand-accent">Combos Especiales</span>
+                </h3>
+                <p className="text-white/60 font-light text-sm max-w-xl">
+                  Lleva combinaciones diseñadas especialmente por nuestros decoradores con un precio exclusivo.
+                </p>
+              </div>
+              
+              {combos.length > 1 && (
+                <div className="flex gap-2">
                   <button
-                    type="submit"
-                    disabled={newsStatus === "loading"}
-                    className="bg-brand-accent text-brand-primary px-8 py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-yellow-400 transition-all shadow-lg shadow-brand-accent/20 whitespace-nowrap disabled:opacity-60"
+                    onClick={handlePrevCombo}
+                    className="w-10 h-10 rounded-full border border-white/20 hover:border-brand-accent hover:text-brand-accent text-white flex items-center justify-center transition-all bg-white/5 backdrop-blur-sm cursor-pointer"
+                    aria-label="Anterior combo"
                   >
-                    {newsStatus === "loading" ? "Enviando..." : "Suscribirme"}
+                    <ChevronLeft size={20} />
                   </button>
-                </form>
+                  <button
+                    onClick={handleNextCombo}
+                    className="w-10 h-10 rounded-full border border-white/20 hover:border-brand-accent hover:text-brand-accent text-white flex items-center justify-center transition-all bg-white/5 backdrop-blur-sm cursor-pointer"
+                    aria-label="Siguiente combo"
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                </div>
               )}
             </div>
+
+            {/* Carousel Body */}
+            <div className="relative z-10 min-h-[380px] flex items-center">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentIndex}
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  transition={{ duration: 0.4 }}
+                  className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center"
+                >
+                  {/* Product grid / list */}
+                  <div className="lg:col-span-7 space-y-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                      {combos[currentIndex].productos_detalle?.map((prod, pIdx) => (
+                        <motion.div
+                          key={pIdx}
+                          whileHover={{ y: -5 }}
+                          className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-3 flex flex-col items-center text-center space-y-2 relative"
+                        >
+                          <span className="absolute top-2 right-2 bg-brand-accent text-brand-primary text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shadow-md">
+                            {prod.cantidad}x
+                          </span>
+                          <div className="w-20 h-20 rounded-xl overflow-hidden bg-white/10 flex items-center justify-center">
+                            {prod.url_miniatura ? (
+                              <img
+                                src={api.getImageUrl(prod.url_miniatura)}
+                                alt={prod.nombre}
+                                className="w-full h-full object-cover"
+                                referrerPolicy="no-referrer"
+                              />
+                            ) : (
+                              <span className="text-white/40 text-xs">Sin foto</span>
+                            )}
+                          </div>
+                          <p className="text-white text-xs font-medium line-clamp-2 w-full pt-1">
+                            {prod.nombre}
+                          </p>
+                          <p className="text-brand-accent/80 font-mono text-[10px]">
+                            C$ {prod.precio_base.toLocaleString()} c/u
+                          </p>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Offer details & action */}
+                  <div className="lg:col-span-5 bg-white/5 backdrop-blur-lg border border-white/10 p-6 sm:p-8 rounded-3xl space-y-6 flex flex-col justify-between h-full">
+                    <div className="space-y-4">
+                      <div className="inline-block bg-brand-accent/20 border border-brand-accent/30 text-brand-accent px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase">
+                        ¡Oferta de Temporada!
+                      </div>
+                      <h4 className="text-2xl sm:text-3xl font-serif font-bold text-white">
+                        {combos[currentIndex].nombre}
+                      </h4>
+                      
+                      {/* Price display */}
+                      <div className="space-y-1">
+                        {(() => {
+                          const costoNormal = combos[currentIndex].productos_detalle?.reduce((acc, curr) => acc + curr.precio_base * curr.cantidad, 0) || 0;
+                          const costoCombo = Number(combos[currentIndex].precio_combo) || 0;
+                          const descuento = costoNormal - costoCombo;
+                          const pct = costoNormal > 0 ? Math.round((descuento / costoNormal) * 100) : 0;
+                          
+                          return (
+                            <>
+                              <div className="flex items-baseline gap-2">
+                                <span className="text-brand-accent font-serif text-3xl sm:text-4xl font-bold">
+                                  C$ {costoCombo.toLocaleString()}
+                                </span>
+                                {costoNormal > costoCombo && (
+                                  <span className="text-white/40 line-through text-sm sm:text-base font-light">
+                                    C$ {costoNormal.toLocaleString()}
+                                  </span>
+                                )}
+                              </div>
+                              {descuento > 0 && (
+                                <div className="text-green-400 text-xs sm:text-sm font-semibold flex items-center gap-1.5">
+                                  <span>¡Ahorras C$ {descuento.toLocaleString()} ({pct}% OFF)!</span>
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleAddComboToCart(combos[currentIndex])}
+                      className="w-full bg-brand-accent hover:bg-yellow-400 text-brand-primary font-bold py-4 rounded-xl text-xs sm:text-sm uppercase tracking-widest transition-all shadow-lg shadow-brand-accent/20 flex items-center justify-center gap-2 cursor-pointer group active:scale-95"
+                    >
+                      <ShoppingBag size={18} className="transition-transform group-hover:scale-110" />
+                      Llevar Combo Completo
+                    </button>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            {/* Carousel indicators */}
+            {combos.length > 1 && (
+              <div className="flex justify-center gap-2 mt-8 z-10 relative">
+                {combos.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentIndex(idx)}
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      currentIndex === idx ? "w-8 bg-brand-accent" : "w-2 bg-white/20 hover:bg-white/40"
+                    }`}
+                    aria-label={`Ir al combo ${idx + 1}`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* CTA Final */}
       <section className="px-4 md:px-8 pb-24">

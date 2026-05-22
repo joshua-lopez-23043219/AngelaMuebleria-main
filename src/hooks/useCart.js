@@ -70,45 +70,79 @@ export function useCart(user) {
 
   if (combos.length > 0 && cart.length > 0) {
     combos.forEach(regla => {
-      const prodReqId = regla.producto_requerido;
-      const prodAsoId = regla.producto_asociado;
-      
-      const itemReq = cart.find(item => item.id === prodReqId);
-      const itemAso = cart.find(item => item.id === prodAsoId);
-      
-      const qtyReq = tempQuantities[prodReqId] || 0;
-      const qtyAso = tempQuantities[prodAsoId] || 0;
-      
-      const vecesReq = Math.floor(qtyReq / regla.cantidad_requerida);
-      if (vecesReq <= 0) return;
-      
-      let vecesActivado = 0;
-      if (prodReqId === prodAsoId) {
-        const totalNeeded = regla.cantidad_requerida + regla.cantidad_asociado;
-        vecesActivado = Math.floor(qtyReq / totalNeeded);
-      } else {
-        const vecesAsociadoTotal = Math.floor(qtyAso / regla.cantidad_asociado);
-        vecesActivado = Math.min(vecesReq, vecesAsociadoTotal);
+      let itemsCombos = [];
+      if (regla.productos_json) {
+        try {
+          itemsCombos = JSON.parse(regla.productos_json);
+        } catch (e) {
+          itemsCombos = [];
+        }
       }
       
+      if (!itemsCombos || itemsCombos.length === 0) {
+        // Fallback para compatibilidad
+        if (regla.producto_requerido) {
+          itemsCombos.push({
+            producto_id: regla.producto_requerido,
+            cantidad: regla.cantidad_requerida || 1
+          });
+        }
+        if (regla.producto_asociado) {
+          itemsCombos.push({
+            producto_id: regla.producto_asociado,
+            cantidad: regla.cantidad_asociado || 1
+          });
+        }
+      }
+
+      if (itemsCombos.length === 0) return;
+
+      // Agrupar requerimientos por producto_id
+      const groupedReqs = {};
+      itemsCombos.forEach(item => {
+        const pid = Number(item.producto_id || item.id);
+        const qty = Number(item.cantidad || item.quantity || 1);
+        if (pid > 0 && qty > 0) {
+          groupedReqs[pid] = (groupedReqs[pid] || 0) + qty;
+        }
+      });
+
+      const reqKeys = Object.keys(groupedReqs).map(Number);
+      if (reqKeys.length === 0) return;
+
+      // Determinar cuántas veces se puede activar el combo
+      let vecesActivado = null;
+      reqKeys.forEach(pid => {
+        const needed = groupedReqs[pid];
+        const inCart = tempQuantities[pid] || 0;
+        const possible = Math.floor(inCart / needed);
+        if (vecesActivado === null) {
+          vecesActivado = possible;
+        } else {
+          vecesActivado = Math.min(vecesActivado, possible);
+        }
+      });
+
+      if (vecesActivado === null) vecesActivado = 0;
+
       if (vecesActivado > 0) {
         // Disminuir de tempQuantities
-        if (prodReqId === prodAsoId) {
-          tempQuantities[prodReqId] -= vecesActivado * (regla.cantidad_requerida + regla.cantidad_asociado);
-        } else {
-          tempQuantities[prodReqId] -= vecesActivado * regla.cantidad_requerida;
-          tempQuantities[prodAsoId] -= vecesActivado * regla.cantidad_asociado;
-        }
-        
+        reqKeys.forEach(pid => {
+          tempQuantities[pid] -= vecesActivado * groupedReqs[pid];
+        });
+
         // Calcular descuento
-        const precioReq = itemReq.price;
-        const precioAso = itemAso ? itemAso.price : (itemReq ? itemReq.price : 0);
-        
-        const costoNormal = (regla.cantidad_requerida * precioReq) + (regla.cantidad_asociado * precioAso);
+        let costoNormal = 0;
+        reqKeys.forEach(pid => {
+          const item = cart.find(i => Number(i.id) === pid);
+          const unitPrice = item ? Number(item.price) : 0;
+          costoNormal += unitPrice * groupedReqs[pid];
+        });
+
         const precioComboNum = regla.precio_combo ? Number(regla.precio_combo) : costoNormal;
         const descuentoUnidad = Math.max(0, costoNormal - precioComboNum);
         const descuentoTotalRegla = vecesActivado * descuentoUnidad;
-        
+
         if (descuentoTotalRegla > 0) {
           comboDiscountTotal += descuentoTotalRegla;
           comboDiscounts.push({
@@ -121,22 +155,45 @@ export function useCart(user) {
           });
         }
       } else {
-        // No se activó el combo porque falta el producto asociado en el carrito.
-        // Pero sí tenemos suficiente del producto requerido, así que sugerimos el producto asociado!
-        comboDiscounts.push({
-          id: regla.id,
-          nombre: regla.nombre,
-          monto: 0,
-          vecesActivado: 0,
-          precio_combo: regla.precio_combo,
-          promptAddGift: true,
-          producto_requerido_id: prodReqId,
-          producto_requerido_nombre: regla.producto_requerido_nombre,
-          producto_asociado_id: prodAsoId,
-          producto_asociado_nombre: regla.producto_asociado_nombre,
-          cantidad_requerida: regla.cantidad_requerida,
-          cantidad_asociado: regla.cantidad_asociado
+        // No se activó. Ver si el usuario tiene al menos uno de los productos requeridos,
+        // para sugerir los que le faltan!
+        const presentItems = [];
+        const missingItems = [];
+        reqKeys.forEach(pid => {
+          const qtyInCart = tempQuantities[pid] || 0;
+          if (qtyInCart > 0) {
+            presentItems.push({ producto_id: pid, qty: qtyInCart });
+          } else {
+            missingItems.push({ producto_id: pid, needed: groupedReqs[pid] });
+          }
         });
+
+        // Sugerir cada producto faltante
+        if (presentItems.length > 0 && missingItems.length > 0) {
+          missingItems.forEach(missing => {
+            let prodName = "Producto recomendado";
+            if (regla.productos_detalle) {
+              const det = regla.productos_detalle.find(d => Number(d.id) === missing.producto_id);
+              if (det) prodName = det.nombre;
+            } else if (missing.producto_id === regla.producto_asociado) {
+              prodName = regla.producto_asociado_nombre;
+            } else if (missing.producto_id === regla.producto_requerido) {
+              prodName = regla.producto_requerido_nombre;
+            }
+
+            comboDiscounts.push({
+              id: regla.id,
+              nombre: regla.nombre,
+              monto: 0,
+              vecesActivado: 0,
+              precio_combo: regla.precio_combo,
+              promptAddGift: true,
+              producto_asociado_id: missing.producto_id,
+              producto_asociado_nombre: prodName,
+              cantidad_asociado: missing.needed
+            });
+          });
+        }
       }
     });
   }

@@ -47,13 +47,11 @@ export const AdminDashboard = () => {
   const [categoriesList, setCategoriesList] = useState([]);
   const [loadingCombos, setLoadingCombos] = useState(false);
   const [newCombo, setNewCombo] = useState({
+    id: null,
     nombre: "",
-    producto_requerido: "",
-    cantidad_requerida: 4,
-    producto_asociado: "",
-    cantidad_asociado: 1,
     activo: true,
     precio_combo: "",
+    productos: [{ producto_id: "", cantidad: 1 }]
   });
 
   const loadCombosData = async () => {
@@ -82,12 +80,13 @@ export const AdminDashboard = () => {
       alert("Por favor ingresa un nombre para el combo.");
       return;
     }
-    if (!newCombo.producto_requerido) {
-      alert("Por favor selecciona el producto requerido.");
+    if (newCombo.productos.length === 0) {
+      alert("Por favor añade al menos un mueble al combo.");
       return;
     }
-    if (!newCombo.producto_asociado) {
-      alert("Por favor selecciona el producto asociado.");
+    const invalidProd = newCombo.productos.find(p => !p.producto_id || p.cantidad <= 0);
+    if (invalidProd) {
+      alert("Por favor selecciona un mueble válido y cantidad mayor a 0 para todos los elementos.");
       return;
     }
     if (!newCombo.precio_combo) {
@@ -95,29 +94,102 @@ export const AdminDashboard = () => {
       return;
     }
     try {
+      const firstProd = newCombo.productos[0];
+      const secondProd = newCombo.productos[1] || null;
+
       const payload = {
         nombre: newCombo.nombre,
-        producto_requerido: parseInt(newCombo.producto_requerido),
-        cantidad_requerida: parseInt(newCombo.cantidad_requerida),
-        producto_asociado: parseInt(newCombo.producto_asociado),
-        cantidad_asociado: parseInt(newCombo.cantidad_asociado),
         activo: newCombo.activo,
         precio_combo: parseFloat(newCombo.precio_combo),
+        productos_json: JSON.stringify(newCombo.productos.map(p => ({
+          producto_id: parseInt(p.producto_id),
+          cantidad: parseInt(p.cantidad)
+        }))),
+        producto_requerido: firstProd ? parseInt(firstProd.producto_id) : null,
+        cantidad_requerida: firstProd ? parseInt(firstProd.cantidad) : 0,
+        producto_asociado: secondProd ? parseInt(secondProd.producto_id) : null,
+        cantidad_asociado: secondProd ? parseInt(secondProd.cantidad) : 0,
       };
-      await api.combos.create(payload);
-      alert("Combo creado exitosamente.");
+
+      if (newCombo.id) {
+        await api.combos.update(newCombo.id, payload);
+        alert("Combo actualizado exitosamente.");
+      } else {
+        await api.combos.create(payload);
+        alert("Combo creado exitosamente.");
+      }
+
       setNewCombo({
+        id: null,
         nombre: "",
-        producto_requerido: "",
-        cantidad_requerida: 4,
-        producto_asociado: "",
-        cantidad_asociado: 1,
         activo: true,
         precio_combo: "",
+        productos: [{ producto_id: "", cantidad: 1 }]
       });
       loadCombosData();
     } catch (e) {
-      alert("Error al crear el combo: " + e.message);
+      alert("Error al guardar el combo: " + e.message);
+    }
+  };
+
+  const handleEditCombo = (c) => {
+    let prodList = [];
+    if (c.productos_json) {
+      try {
+        const parsed = JSON.parse(c.productos_json);
+        prodList = parsed.map(p => ({
+          producto_id: String(p.producto_id || p.id),
+          cantidad: Number(p.cantidad || p.quantity || 1)
+        }));
+      } catch (e) {
+        prodList = [];
+      }
+    }
+    
+    if (prodList.length === 0) {
+      if (c.producto_requerido) {
+        prodList.push({
+          producto_id: String(c.producto_requerido),
+          cantidad: Number(c.cantidad_requerida || 1)
+        });
+      }
+      if (c.producto_asociado) {
+        prodList.push({
+          producto_id: String(c.producto_asociado),
+          cantidad: Number(c.cantidad_asociado || 1)
+        });
+      }
+    }
+
+    if (prodList.length === 0) {
+      prodList = [{ producto_id: "", cantidad: 1 }];
+    }
+
+    setNewCombo({
+      id: c.id,
+      nombre: c.nombre,
+      activo: c.activo,
+      precio_combo: String(c.precio_combo),
+      productos: prodList
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setNewCombo({
+      id: null,
+      nombre: "",
+      activo: true,
+      precio_combo: "",
+      productos: [{ producto_id: "", cantidad: 1 }]
+    });
+  };
+
+  const handleToggleActiveCombo = async (id, currentStatus) => {
+    try {
+      await api.combos.update(id, { activo: !currentStatus });
+      setCombos(prev => prev.map(c => c.id === id ? { ...c, activo: !currentStatus } : c));
+    } catch (e) {
+      alert("Error al cambiar estado del combo: " + e.message);
     }
   };
 
@@ -753,9 +825,11 @@ export const AdminDashboard = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Form to Create Combo */}
+              {/* Form to Create/Edit Combo */}
               <div className="lg:col-span-1 bg-white p-6 rounded-2xl border border-brand-accent/10 shadow-sm space-y-4">
-                <h3 className="text-lg font-serif font-bold border-b pb-2">Crear Nueva Regla</h3>
+                <h3 className="text-lg font-serif font-bold border-b pb-2">
+                  {newCombo.id ? "Editar Regla de Combo" : "Crear Nueva Regla"}
+                </h3>
                 <form onSubmit={handleCreateCombo} className="space-y-4">
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Nombre del Combo</label>
@@ -764,81 +838,88 @@ export const AdminDashboard = () => {
                       placeholder="Ej. Lleva una mesa gratis por 4 sillas"
                       value={newCombo.nombre}
                       onChange={(e) => setNewCombo({ ...newCombo, nombre: e.target.value })}
-                      className="w-full px-4 py-2 border rounded-lg text-sm"
+                      className="w-full px-4 py-2 border rounded-lg text-sm focus:ring-1 focus:ring-brand-accent focus:outline-none"
                       required
                     />
                   </div>
 
-                  <div className="p-3 bg-paper/50 rounded-xl space-y-3 border">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-brand-primary">Condición (Requisito)</h4>
-                    <div className="space-y-2">
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-gray-400 uppercase">Mueble Requerido</label>
-                        <select
-                          value={newCombo.producto_requerido}
-                          onChange={(e) => setNewCombo({ ...newCombo, producto_requerido: e.target.value })}
-                          className="w-full px-2 py-1.5 border rounded-lg text-xs"
-                          required
-                        >
-                          <option value="">Selecciona un mueble...</option>
-                          {(admin.products || []).map(p => (
-                            <option key={p.id} value={p.id}>{p.code ? `[${p.code}] ` : ''}{p.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-gray-400 uppercase">Cantidad Necesaria</label>
-                        <input
-                          type="number"
-                          min="1"
-                          value={newCombo.cantidad_requerida}
-                          onChange={(e) => setNewCombo({ ...newCombo, cantidad_requerida: e.target.value })}
-                          className="w-full px-2 py-1.5 border rounded-lg text-xs"
-                          required
-                        />
-                      </div>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Muebles en el Combo</label>
+                      <button
+                        type="button"
+                        onClick={() => setNewCombo({
+                          ...newCombo,
+                          productos: [...newCombo.productos, { producto_id: "", cantidad: 1 }]
+                        })}
+                        className="text-[11px] font-bold text-brand-primary hover:text-brand-accent flex items-center gap-0.5"
+                      >
+                        <Plus size={12} /> Añadir mueble
+                      </button>
                     </div>
-                  </div>
 
-                  <div className="p-3 bg-brand-accent/5 rounded-xl space-y-3 border border-brand-accent/20">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-brand-accent">Mueble Asociado (Para completar el Combo)</h4>
-                    <div className="space-y-2">
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-gray-400 uppercase">Mueble Asociado</label>
-                        <select
-                          value={newCombo.producto_asociado}
-                          onChange={(e) => setNewCombo({ ...newCombo, producto_asociado: e.target.value })}
-                          className="w-full px-2 py-1.5 border rounded-lg text-xs"
-                          required
-                        >
-                          <option value="">Selecciona un mueble...</option>
-                          {(admin.products || []).map(p => (
-                            <option key={p.id} value={p.id}>{p.code ? `[${p.code}] ` : ''}{p.name}</option>
-                          ))}
-                        </select>
+                    {newCombo.productos.map((prodItem, idx) => (
+                      <div key={idx} className="p-3 bg-paper/50 rounded-xl space-y-2 border relative">
+                        {newCombo.productos.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updatedProds = newCombo.productos.filter((_, i) => i !== idx);
+                              setNewCombo({ ...newCombo, productos: updatedProds });
+                            }}
+                            className="absolute top-2 right-2 text-red-400 hover:text-red-600 p-0.5 rounded transition-colors"
+                            title="Remover este mueble"
+                          >
+                            <X size={14} />
+                          </button>
+                        )}
+                        
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-bold text-gray-400 uppercase">Mueble #{idx + 1}</label>
+                          <select
+                            value={prodItem.producto_id}
+                            onChange={(e) => {
+                              const updated = [...newCombo.productos];
+                              updated[idx].producto_id = e.target.value;
+                              setNewCombo({ ...newCombo, productos: updated });
+                            }}
+                            className="w-full px-2 py-1.5 border rounded-lg text-xs"
+                            required
+                          >
+                            <option value="">Selecciona un mueble...</option>
+                            {(admin.products || []).map(p => (
+                              <option key={p.id} value={p.id}>{p.code ? `[${p.code}] ` : ''}{p.name}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-bold text-gray-400 uppercase">Cantidad</label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={prodItem.cantidad}
+                            onChange={(e) => {
+                              const updated = [...newCombo.productos];
+                              updated[idx].cantidad = parseInt(e.target.value) || 1;
+                              setNewCombo({ ...newCombo, productos: updated });
+                            }}
+                            className="w-full px-2 py-1.5 border rounded-lg text-xs"
+                            required
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-gray-400 uppercase">Cantidad Necesaria</label>
-                        <input
-                          type="number"
-                          min="1"
-                          value={newCombo.cantidad_asociado}
-                          onChange={(e) => setNewCombo({ ...newCombo, cantidad_asociado: e.target.value })}
-                          className="w-full px-2 py-1.5 border rounded-lg text-xs"
-                          required
-                        />
-                      </div>
-                    </div>
+                    ))}
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase">Precio del Combo Completo</label>
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Precio del Combo Completo</label>
                     <input
                       type="number"
                       placeholder="Ej. 9500"
                       value={newCombo.precio_combo}
                       onChange={(e) => setNewCombo({ ...newCombo, precio_combo: e.target.value })}
-                      className="w-full px-2 py-1.5 border rounded-lg text-xs"
+                      className="w-full px-4 py-2 border rounded-lg text-sm focus:ring-1 focus:ring-brand-accent focus:outline-none"
                       required
                     />
                   </div>
@@ -856,12 +937,23 @@ export const AdminDashboard = () => {
                     </label>
                   </div>
 
-                  <button
-                    type="submit"
-                    className="w-full bg-brand-primary hover:bg-brand-accent text-white font-bold py-2.5 rounded-xl text-sm transition-all flex items-center justify-center gap-2"
-                  >
-                    <Plus size={16} /> Crear Combo
-                  </button>
+                  <div className="flex gap-2">
+                    {newCombo.id && (
+                      <button
+                        type="button"
+                        onClick={handleCancelEdit}
+                        className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 rounded-xl text-sm transition-all"
+                      >
+                        Cancelar
+                      </button>
+                    )}
+                    <button
+                      type="submit"
+                      className="flex-1 bg-brand-primary hover:bg-brand-accent text-white font-bold py-2.5 rounded-xl text-sm transition-all flex items-center justify-center gap-2"
+                    >
+                      {newCombo.id ? "Guardar" : "Crear Combo"}
+                    </button>
+                  </div>
                 </form>
               </div>
 
@@ -875,42 +967,81 @@ export const AdminDashboard = () => {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {combos.map((c) => (
-                      <div key={c.id} className="bg-white p-5 rounded-2xl border border-brand-accent/10 shadow-sm flex flex-col justify-between space-y-4">
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-start">
-                            <h4 className="font-serif font-bold text-base text-brand-primary">{c.nombre}</h4>
-                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${c.activo ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
-                              {c.activo ? 'Activo' : 'Inactivo'}
-                            </span>
+                    {combos.map((c) => {
+                      const detailList = c.productos_detalle || [];
+                      return (
+                        <div key={c.id} className="bg-white p-5 rounded-2xl border border-brand-accent/10 shadow-sm flex flex-col justify-between space-y-4">
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-start gap-4">
+                              <h4 className="font-serif font-bold text-base text-brand-primary line-clamp-2">{c.nombre}</h4>
+                              
+                              {/* Toggle switch for active status */}
+                              <label className="relative inline-flex items-center cursor-pointer select-none" title={c.activo ? "Desactivar Combo" : "Activar Combo"}>
+                                <input
+                                  type="checkbox"
+                                  checked={c.activo}
+                                  onChange={() => handleToggleActiveCombo(c.id, c.activo)}
+                                  className="sr-only peer"
+                                />
+                                <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
+                                <span className="ml-1.5 text-[10px] font-bold text-gray-500 uppercase">
+                                  {c.activo ? 'ON' : 'OFF'}
+                                </span>
+                              </label>
+                            </div>
+
+                            <div className="text-xs text-gray-500 space-y-1.5">
+                              <div className="bg-paper/30 p-2 rounded-xl border border-gray-100 space-y-1">
+                                <p className="font-bold text-[10px] uppercase text-gray-400 tracking-wider">Productos en el Combo:</p>
+                                {detailList.length > 0 ? (
+                                  detailList.map((item, idx) => (
+                                    <div key={idx} className="flex justify-between text-gray-700 text-xs">
+                                      <span>📦 {item.nombre}</span>
+                                      <span className="font-bold">x{item.cantidad}</span>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <>
+                                    <div className="flex justify-between text-gray-700 text-xs">
+                                      <span>📦 {c.producto_requerido_nombre}</span>
+                                      <span className="font-bold">x{c.cantidad_requerida}</span>
+                                    </div>
+                                    <div className="flex justify-between text-gray-700 text-xs">
+                                      <span>📦 {c.producto_asociado_nombre}</span>
+                                      <span className="font-bold">x{c.cantidad_asociado}</span>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                              
+                              {c.precio_combo && (
+                                <div className="flex justify-between items-center pt-1 px-1">
+                                  <span className="font-medium text-gray-400">Precio especial:</span>
+                                  <span className="font-bold text-brand-accent text-sm">C${Number(c.precio_combo).toLocaleString()}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
 
-                          <div className="text-xs text-gray-500 space-y-1">
-                            <p>
-                              👉 Compra: <span className="font-bold text-gray-700">{c.cantidad_requerida}x {c.producto_requerido_nombre}</span>
-                            </p>
-                             <p>
-                              🤝 Asociado: <span className="font-bold text-brand-primary">{c.cantidad_asociado}x {c.producto_asociado_nombre}</span>
-                            </p>
-                            {c.precio_combo && (
-                              <p>
-                                💰 Precio Combo: <span className="font-bold text-brand-accent">C${Number(c.precio_combo).toLocaleString()}</span>
-                              </p>
-                            )}
+                          <div className="flex justify-between items-center pt-2 border-t border-dashed">
+                            <button
+                              type="button"
+                              onClick={() => handleEditCombo(c)}
+                              className="text-brand-primary hover:bg-brand-primary/5 px-2.5 py-1.5 rounded-lg transition-all text-xs font-bold flex items-center gap-1"
+                            >
+                              <Edit3 size={14} /> Editar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteCombo(c.id)}
+                              className="text-red-500 hover:bg-red-50 px-2.5 py-1.5 rounded-lg transition-all text-xs font-bold flex items-center gap-1"
+                            >
+                              <Trash2 size={14} /> Eliminar
+                            </button>
                           </div>
                         </div>
-
-                        <div className="flex justify-end pt-2 border-t border-dashed">
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteCombo(c.id)}
-                            className="text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-all text-xs font-bold flex items-center gap-1"
-                          >
-                            <Trash2 size={14} /> Eliminar
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>

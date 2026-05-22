@@ -161,6 +161,11 @@ export const api = {
     },
     create: (data) =>
       apiFetch("/apiComboPedido/ReglaCombo/", { method: "POST", body: JSON.stringify(data) }),
+    update: (id, data) =>
+      apiFetch(`/apiComboPedido/ReglaCombo/${id}/`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      }),
     delete: (id) =>
       apiFetch(`/apiComboPedido/ReglaCombo/${id}/`, { method: "DELETE" }),
   },

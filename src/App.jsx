@@ -76,7 +76,7 @@ export default function App() {
       {/* Main Content Section (Structure/HTML) */}
       <main className="flex-1 w-full">
         {currentPage === "home" && (
-          <HomeView onStartShopping={() => setCurrentPage("catalog")} />
+          <HomeView onStartShopping={() => setCurrentPage("catalog")} onAddToCart={cart.addToCart} />
         )}
 
         {currentPage === "catalog" && (
