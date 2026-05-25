@@ -140,12 +140,27 @@ export const FurnitureBuilder = () => {
               className="group cursor-pointer bg-white border border-brand-accent/10 rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500"
             >
               <div className="aspect-[4/3] overflow-hidden relative">
-                <img
-                  src={type.image_url || type.image}
-                  alt={type.name}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  referrerPolicy="no-referrer"
-                />
+                {type.image_url?.endsWith('.glb') ? (
+                  <div className="w-full h-full pointer-events-none">
+                    <model-viewer
+                      src={api.getImageUrl(type.image_url)}
+                      alt={type.name}
+                      auto-rotate
+                      camera-orbit="45deg 75deg 105%"
+                      field-of-view="auto"
+                      shadow-intensity="1"
+                      style={{ width: "100%", height: "100%", pointerEvents: "none", outline: "none" }}
+                      className="w-full h-full"
+                    />
+                  </div>
+                ) : (
+                  <img
+                    src={type.image_url ? api.getImageUrl(type.image_url) : type.image}
+                    alt={type.name}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    referrerPolicy="no-referrer"
+                  />
+                )}
 
                 <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors" />
                 <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full flex items-center gap-2 shadow-lg">
