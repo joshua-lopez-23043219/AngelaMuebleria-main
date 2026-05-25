@@ -220,7 +220,7 @@ export const api = {
 
   customizations: {
     getFurnitures: async () => {
-      const res = await apiFetch("/apiPersonalizacion/MuebleBase/");
+      const res = await apiFetch(`/apiPersonalizacion/MuebleBase/?_t=${Date.now()}`);
       return Array.isArray(res) ? res : (res.results || []);
     },
     createFurniture: (data) => 
@@ -228,7 +228,7 @@ export const api = {
     deleteFurniture: (id) => 
       apiFetch(`/apiPersonalizacion/MuebleBase/${id}/`, { method: "DELETE" }),
     getColors: async () => {
-      const res = await apiFetch("/apiPersonalizacion/ColorMaterial/");
+      const res = await apiFetch(`/apiPersonalizacion/ColorMaterial/?_t=${Date.now()}`);
       return Array.isArray(res) ? res : (res.results || []);
     },
     createColor: (data) => 
