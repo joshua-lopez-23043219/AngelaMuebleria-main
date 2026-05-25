@@ -219,12 +219,22 @@ export const api = {
   },
 
   customizations: {
-    getFurnitures: async () => [],
-    createFurniture: (data) => Promise.resolve({}),
-    deleteFurniture: (id) => Promise.resolve({}),
-    getColors: async () => [],
-    createColor: (data) => Promise.resolve({}),
-    deleteColor: (id) => Promise.resolve({}),
+    getFurnitures: async () => {
+      const res = await apiFetch("/apiPersonalizacion/MuebleBase/");
+      return Array.isArray(res) ? res : (res.results || []);
+    },
+    createFurniture: (data) => 
+      apiFetch("/apiPersonalizacion/MuebleBase/", { method: "POST", body: JSON.stringify(data) }),
+    deleteFurniture: (id) => 
+      apiFetch(`/apiPersonalizacion/MuebleBase/${id}/`, { method: "DELETE" }),
+    getColors: async () => {
+      const res = await apiFetch("/apiPersonalizacion/ColorMaterial/");
+      return Array.isArray(res) ? res : (res.results || []);
+    },
+    createColor: (data) => 
+      apiFetch("/apiPersonalizacion/ColorMaterial/", { method: "POST", body: JSON.stringify(data) }),
+    deleteColor: (id) => 
+      apiFetch(`/apiPersonalizacion/ColorMaterial/${id}/`, { method: "DELETE" }),
   },
 
   marketing: {
