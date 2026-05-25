@@ -17,6 +17,7 @@ import { LoginPage } from "./components/LoginPage";
 import { OrdersList } from "./components/OrdersList";
 import { FurnitureBuilder } from "./components/FurnitureBuilder";
 import { HomeView } from "./components/HomeView";
+import { ResetPasswordPage } from "./components/ResetPasswordPage";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState("home");
@@ -26,6 +27,15 @@ export default function App() {
   const prod = useProducts();
   const cart = useCart(auth.user);
   
+  // Check for reset-password query param on mount
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const action = params.get("action");
+    if (action === "reset-password") {
+      setCurrentPage("reset-password");
+    }
+  }, []);
+
   // Refresh products whenever we navigate to a public listing page
   React.useEffect(() => {
     if (currentPage === "catalog" || currentPage === "designs") {
@@ -156,6 +166,12 @@ export default function App() {
                 setCurrentPage("catalog");
               }}
             />
+          </div>
+        )}
+
+        {currentPage === "reset-password" && (
+          <div className="max-w-md mx-auto">
+            <ResetPasswordPage onChangePage={setCurrentPage} />
           </div>
         )}
 

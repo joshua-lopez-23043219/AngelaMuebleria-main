@@ -106,6 +106,20 @@ export const api = {
           rol: "cliente"
         }),
       }),
+    recoverPassword: (email) =>
+      apiFetch("/apiUsuarios/Usuario/recuperar_contrasena/", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      }),
+    resetPassword: (uidb64, token, newPassword) =>
+      apiFetch("/apiUsuarios/Usuario/restablecer_contrasena/", {
+        method: "POST",
+        body: JSON.stringify({
+          uidb64,
+          token,
+          new_password: newPassword,
+        }),
+      }),
   },
 
   products: {
