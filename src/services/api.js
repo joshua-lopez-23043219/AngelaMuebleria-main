@@ -24,7 +24,8 @@ const getImageUrl = (url) => {
 
 const apiFetch = async (endpoint, options = {}) => {
   const token = localStorage.getItem("muebleria_token");
-  const isAuthRequest = endpoint.includes("/api/token/") || (endpoint.includes("/apiUsuarios/Usuario/") && options.method === "POST");
+  const isAuthRequest = endpoint.includes("/api/token/") || 
+    ((endpoint === "/apiUsuarios/Usuario/" || endpoint === "/apiUsuarios/Usuario") && options.method === "POST");
 
   const headers = {
     "Content-Type": "application/json",
