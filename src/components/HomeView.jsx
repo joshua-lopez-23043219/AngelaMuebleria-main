@@ -488,7 +488,7 @@ export const HomeView = ({ onStartShopping, onAddToCart }) => {
       {/* CTA Final */}
       <section className="px-4 md:px-8 pb-24">
         <div className="max-w-7xl mx-auto bg-brand-accent/10 rounded-[2rem] md:rounded-[4rem] p-8 md:p-16 text-center space-y-6 md:space-y-8 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-brand-accent/10 blur-[120px] rounded-full" />
+          <div className="absolute top-0 right-0 w-96 h-96 bg-brand-accent/10 blur-[120px] rounded-full pointer-events-none" />
           <h2 className="text-3xl md:text-5xl font-serif font-bold text-brand-primary leading-tight">
             ¿Listo para transformar <span className="italic">tu espacio?</span>
           </h2>
@@ -498,7 +498,7 @@ export const HomeView = ({ onStartShopping, onAddToCart }) => {
           </p>
           <button
             onClick={onStartShopping}
-            className="inline-block bg-brand-primary text-white px-8 md:px-12 py-4 md:py-5 rounded-full font-bold text-xs md:text-sm uppercase tracking-widest hover:bg-brand-accent transition-all shadow-xl shadow-brand-primary/20"
+            className="relative z-10 inline-block bg-brand-primary text-white px-8 md:px-12 py-4 md:py-5 rounded-full font-bold text-xs md:text-sm uppercase tracking-widest hover:bg-brand-accent transition-all shadow-xl shadow-brand-primary/20 cursor-pointer"
           >
             Comenzar Experiencia
           </button>

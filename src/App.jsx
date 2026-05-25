@@ -36,6 +36,11 @@ export default function App() {
     }
   }, []);
 
+  // Force scroll to top on every page change
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentPage]);
+
   // Refresh products whenever we navigate to a public listing page
   React.useEffect(() => {
     if (currentPage === "catalog" || currentPage === "designs") {
