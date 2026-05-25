@@ -155,44 +155,47 @@ export function useCart(user) {
           });
         }
       } else {
-        // No se activó. Ver si el usuario tiene al menos uno de los productos requeridos,
-        // para sugerir los que le faltan!
-        const presentItems = [];
-        const missingItems = [];
-        reqKeys.forEach(pid => {
-          const qtyInCart = tempQuantities[pid] || 0;
-          if (qtyInCart > 0) {
-            presentItems.push({ producto_id: pid, qty: qtyInCart });
-          } else {
-            missingItems.push({ producto_id: pid, needed: groupedReqs[pid] });
-          }
-        });
-
-        // Sugerir cada producto faltante
-        if (presentItems.length > 0 && missingItems.length > 0) {
-          missingItems.forEach(missing => {
-            let prodName = "Producto recomendado";
-            if (regla.productos_detalle) {
-              const det = regla.productos_detalle.find(d => Number(d.id) === missing.producto_id);
-              if (det) prodName = det.nombre;
-            } else if (missing.producto_id === regla.producto_asociado) {
-              prodName = regla.producto_asociado_nombre;
-            } else if (missing.producto_id === regla.producto_requerido) {
-              prodName = regla.producto_requerido_nombre;
+        // No se activó. Ver si el usuario tiene al menos una parte del combo para sugerir lo faltante.
+        const totalUnidadesComboEnCarrito = reqKeys.reduce((acc, pid) => acc + (tempQuantities[pid] || 0), 0);
+        if (totalUnidadesComboEnCarrito > 0) {
+          const missingItems = [];
+          reqKeys.forEach(pid => {
+            const qtyInCart = tempQuantities[pid] || 0;
+            const qtyNeeded = groupedReqs[pid];
+            if (qtyInCart < qtyNeeded) {
+              missingItems.push({
+                producto_id: pid,
+                needed: qtyNeeded - qtyInCart
+              });
             }
-
-            comboDiscounts.push({
-              id: regla.id,
-              nombre: regla.nombre,
-              monto: 0,
-              vecesActivado: 0,
-              precio_combo: regla.precio_combo,
-              promptAddGift: true,
-              producto_asociado_id: missing.producto_id,
-              producto_asociado_nombre: prodName,
-              cantidad_asociado: missing.needed
-            });
           });
+
+          // Sugerir cada producto faltante con la cantidad restante necesaria
+          if (missingItems.length > 0) {
+            missingItems.forEach(missing => {
+              let prodName = "Producto recomendado";
+              if (regla.productos_detalle) {
+                const det = regla.productos_detalle.find(d => Number(d.id) === missing.producto_id);
+                if (det) prodName = det.nombre;
+              } else if (missing.producto_id === regla.producto_asociado) {
+                prodName = regla.producto_asociado_nombre;
+              } else if (missing.producto_id === regla.producto_requerido) {
+                prodName = regla.producto_requerido_nombre;
+              }
+
+              comboDiscounts.push({
+                id: regla.id,
+                nombre: regla.nombre,
+                monto: 0,
+                vecesActivado: 0,
+                precio_combo: regla.precio_combo,
+                promptAddGift: true,
+                producto_asociado_id: missing.producto_id,
+                producto_asociado_nombre: prodName,
+                cantidad_asociado: missing.needed
+              });
+            });
+          }
         }
       }
     });

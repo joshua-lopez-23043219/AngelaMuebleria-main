@@ -168,6 +168,66 @@ export const CartDropdown = ({
                       </div>
                     ))
                   )}
+
+                  {/* Combo Suggestions inside scrollable area to prevent squishing */}
+                  {items.length > 0 && comboDiscounts && comboDiscounts.some(c => c.promptAddGift) && (
+                    <div className="pt-4 border-t border-dashed space-y-3">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider text-left">Sugerencias para tu pedido:</p>
+                      {comboDiscounts.map((combo, idx) => {
+                        if (!combo.promptAddGift) return null;
+                        const prod = (products || []).find(p => p.id === combo.producto_asociado_id);
+                        if (!prod || (Number(prod.stock) || 0) <= 0 || prod.esta_activo === false) {
+                          return null;
+                        }
+                        return (
+                          <div key={idx} className="bg-amber-50/90 border border-amber-200 rounded-2xl p-4 text-xs text-amber-900 space-y-3 shadow-sm text-left">
+                            <div className="space-y-1">
+                              <p className="font-bold flex items-center gap-1.5 text-amber-800 text-sm">
+                                ✨ ¡Completa tu Combo: {combo.nombre}!
+                              </p>
+                              <p className="text-gray-600 leading-relaxed">
+                                {combo.precio_combo && Number(combo.precio_combo) > 0 
+                                  ? `Lleva el combo completo por solo C$ ${Number(combo.precio_combo).toLocaleString()} en lugar de su precio regular.`
+                                  : `Agrega ${combo.cantidad_asociado}x ${combo.producto_asociado_nombre} para activar la promo.`
+                                }
+                              </p>
+                            </div>
+                            
+                            <div className="space-y-2 pt-1 border-t border-amber-200/40">
+                              <p className="font-semibold text-amber-800 uppercase tracking-wider text-[9px]">
+                                Añade para activar la promo (Faltan {combo.cantidad_asociado}):
+                              </p>
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between bg-white/70 hover:bg-white p-2 rounded-xl border border-amber-200/50 transition-all gap-3">
+                                  <div className="flex items-center gap-2">
+                                    <img
+                                      src={api.getImageUrl(prod.image_url) || `https://picsum.photos/seed/${prod.name}/50/50`}
+                                      className="w-8 h-8 object-cover rounded-md"
+                                      alt={prod.name}
+                                    />
+                                    <div className="text-left">
+                                      <p className="font-bold text-gray-800 text-[11px] line-clamp-1">{prod.name}</p>
+                                      <p className="text-gray-500 font-medium text-[10px]">C$ {Number(prod.price).toLocaleString()}</p>
+                                    </div>
+                                  </div>
+                                  <button
+                                    onClick={() => {
+                                      if (onAddToCart) {
+                                        onAddToCart(prod);
+                                      }
+                                    }}
+                                    className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-2.5 py-1 rounded-lg text-[10px] transition-all whitespace-nowrap shadow-sm hover:shadow"
+                                  >
+                                    + Añadir
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 <div className="p-6 border-t bg-paper/50 space-y-3">
@@ -203,69 +263,17 @@ export const CartDropdown = ({
                     </form>
                   )}
 
-                  {/* Total summary */}
-                  {comboDiscounts && comboDiscounts.length > 0 && (
-                    <div className="space-y-3 border-b border-brand-accent/5 pb-2 mb-2">
+                  {/* Active Combo Discounts */}
+                  {comboDiscounts && comboDiscounts.some(c => !c.promptAddGift) && (
+                    <div className="space-y-2 border-b border-brand-accent/5 pb-2 mb-2">
                       {comboDiscounts.map((combo, idx) => {
-                        if (combo.promptAddGift) {
-                          // Buscar el producto asociado específico
-                          const prod = (products || []).find(p => p.id === combo.producto_asociado_id);
-                          if (!prod || (Number(prod.stock) || 0) <= 0 || prod.esta_activo === false) {
-                            return null;
-                          }
-
-                          return (
-                            <div key={idx} className="bg-amber-50/90 border border-amber-200 rounded-2xl p-4 text-xs text-amber-900 space-y-3 shadow-sm">
-                              <div className="space-y-1">
-                                <p className="font-bold flex items-center gap-1.5 text-amber-800 text-sm">
-                                  ✨ ¡Completa tu Combo: {combo.nombre}!
-                                </p>
-                                <p className="text-gray-600 leading-relaxed">
-                                  {combo.precio_combo && Number(combo.precio_combo) > 0 
-                                    ? `Lleva el combo completo por solo C$ ${Number(combo.precio_combo).toLocaleString()} en lugar de su precio regular.`
-                                    : `Agrega ${combo.cantidad_asociado}x ${combo.producto_asociado_nombre} para activar la promo.`
-                                  }
-                                </p>
-                              </div>
-                              
-                              <div className="space-y-2 pt-1 border-t border-amber-200/40">
-                                <p className="font-semibold text-amber-800 uppercase tracking-wider text-[9px]">Añade uno para activar la promo:</p>
-                                <div className="space-y-2">
-                                  <div className="flex items-center justify-between bg-white/70 hover:bg-white p-2 rounded-xl border border-amber-200/50 transition-all gap-3">
-                                    <div className="flex items-center gap-2">
-                                      <img
-                                        src={api.getImageUrl(prod.image_url) || `https://picsum.photos/seed/${prod.name}/50/50`}
-                                        className="w-8 h-8 object-cover rounded-md"
-                                        alt={prod.name}
-                                      />
-                                      <div className="text-left">
-                                        <p className="font-bold text-gray-800 text-[11px] line-clamp-1">{prod.name}</p>
-                                        <p className="text-gray-500 font-medium text-[10px]">C$ {Number(prod.price).toLocaleString()}</p>
-                                      </div>
-                                    </div>
-                                    <button
-                                      onClick={() => {
-                                        if (onAddToCart) {
-                                          onAddToCart(prod);
-                                        }
-                                      }}
-                                      className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-2.5 py-1 rounded-lg text-[10px] transition-all whitespace-nowrap shadow-sm hover:shadow"
-                                    >
-                                      + Añadir
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        } else {
-                          return (
-                            <div key={idx} className="flex justify-between text-sm text-green-600 font-medium">
-                              <span className="flex items-center gap-1">🎁 {combo.nombre}</span>
-                              <span>-C${combo.monto.toLocaleString()}</span>
-                            </div>
-                          );
-                        }
+                        if (combo.promptAddGift) return null;
+                        return (
+                          <div key={idx} className="flex justify-between text-sm text-green-600 font-medium">
+                            <span className="flex items-center gap-1">🎁 {combo.nombre}</span>
+                            <span>-C${combo.monto.toLocaleString()}</span>
+                          </div>
+                        );
                       })}
                     </div>
                   )}
