@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "motion/react";
 import {
   Box,
@@ -21,6 +21,74 @@ export const FurnitureBuilder = () => {
   const [materials, setMaterials] = useState([]);
   const [fabrics, setFabrics] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const modelRef = useRef(null);
+
+  const applyColors = () => {
+    const modelViewer = modelRef.current;
+    if (!modelViewer || !modelViewer.model) return;
+
+    const activeWood = materials.find(m => m.id === material);
+    const activeFabric = fabrics.find(f => f.id === fabric);
+
+    const hexToRgb = (hex) => {
+      if (!hex) return null;
+      const sh = hex.replace('#', '');
+      if (sh.length !== 6) return null;
+      const r = parseInt(sh.substring(0, 2), 16) / 255;
+      const g = parseInt(sh.substring(2, 4), 16) / 255;
+      const b = parseInt(sh.substring(4, 6), 16) / 255;
+      return [r, g, b, 1.0];
+    };
+
+    const woodColor = hexToRgb(activeWood?.hex_code);
+    const fabricColor = hexToRgb(activeFabric?.hex_code);
+
+    const mats = modelViewer.model.materials;
+    if (mats.length === 0) return;
+
+    let matchedAny = false;
+    mats.forEach(mat => {
+      const name = mat.name.toLowerCase();
+      const isWood = name.includes('wood') || name.includes('madera') || name.includes('leg') || name.includes('base') || name.includes('estructura') || name.includes('palo') || name.includes('soporte');
+      const isFabric = name.includes('fabric') || name.includes('tela') || name.includes('cushion') || name.includes('cojin') || name.includes('seat') || name.includes('asiento') || name.includes('respaldo') || name.includes('cuero') || name.includes('leather');
+      
+      if (isWood && woodColor) {
+        mat.pbrMetallicRoughness.setBaseColorFactor(woodColor);
+        matchedAny = true;
+      } else if (isFabric && fabricColor) {
+        mat.pbrMetallicRoughness.setBaseColorFactor(fabricColor);
+        matchedAny = true;
+      }
+    });
+
+    if (!matchedAny) {
+      if (mats.length === 1 && fabricColor) {
+        mats[0].pbrMetallicRoughness.setBaseColorFactor(fabricColor);
+      } else if (mats.length >= 2) {
+        if (fabricColor) mats[0].pbrMetallicRoughness.setBaseColorFactor(fabricColor);
+        if (woodColor) mats[1].pbrMetallicRoughness.setBaseColorFactor(woodColor);
+      }
+    }
+  };
+
+  useEffect(() => {
+    const modelViewer = modelRef.current;
+    if (!modelViewer) return;
+
+    const handleLoad = () => {
+      applyColors();
+    };
+    modelViewer.addEventListener('load', handleLoad);
+    
+    if (modelViewer.model) {
+      applyColors();
+    }
+
+    return () => {
+      modelViewer.removeEventListener('load', handleLoad);
+    };
+  }, [material, fabric, selectedFurniture, materials, fabrics]);
 
   useEffect(() => {
     const load = async () => {
@@ -142,54 +210,72 @@ export const FurnitureBuilder = () => {
             }}
           ></div>
 
-          <motion.div
-            key={`${material}-${fabric}`}
-            initial={{ scale: 0.8, opacity: 0, rotateY: -20 }}
-            animate={{ scale: 1, opacity: 1, rotateY: 0 }}
-            transition={{ duration: 0.8, type: "spring" }}
-            className="relative z-10 w-64 h-64 flex flex-col items-center"
-          >
-            {/* Representación visual abstracta adaptada */}
-            <div
-              className="w-full h-32 rounded-t-3xl shadow-2xl relative transition-colors duration-500"
-              style={{
-                backgroundColor: fabrics.find((f) => f.id === fabric)?.hex_code,
-              }}
+          {selectedFurniture.image_url?.endsWith('.glb') ? (
+            <model-viewer
+              ref={modelRef}
+              src={api.getImageUrl(selectedFurniture.image_url)}
+              alt={selectedFurniture.name}
+              camera-controls
+              auto-rotate
+              shadow-intensity="1"
+              style={{ width: "100%", height: "100%", outline: "none" }}
+              className="w-full h-full"
             >
-              <div className="absolute -top-4 -right-4 bg-brand-accent/20 w-12 h-12 rounded-full blur-xl animate-pulse" />
-            </div>
-            <div
-              className="w-[110%] h-12 -mt-2 rounded-xl shadow-lg transition-colors duration-500"
-              style={{
-                backgroundColor: fabrics.find((f) => f.id === fabric)?.hex_code,
-              }}
-            ></div>
-            <div className="flex gap-16 mt-0">
+              <div slot="poster" className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50/80 backdrop-blur-sm gap-3">
+                <div className="w-10 h-10 border-4 border-brand-accent border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-xs font-bold text-gray-500 tracking-wider uppercase">Cargando Modelo 3D...</span>
+              </div>
+            </model-viewer>
+          ) : (
+            <motion.div
+              key={`${material}-${fabric}`}
+              initial={{ scale: 0.8, opacity: 0, rotateY: -20 }}
+              animate={{ scale: 1, opacity: 1, rotateY: 0 }}
+              transition={{ duration: 0.8, type: "spring" }}
+              className="relative z-10 w-64 h-64 flex flex-col items-center"
+            >
+              {/* Representación visual abstracta adaptada */}
               <div
-                className="w-6 h-12 rounded-b-lg shadow-md transition-colors duration-500"
+                className="w-full h-32 rounded-t-3xl shadow-2xl relative transition-colors duration-500"
                 style={{
-                  backgroundColor: materials.find((m) => m.id === material)
-                    ?.hex_code,
+                  backgroundColor: fabrics.find((f) => f.id === fabric)?.hex_code,
+                }}
+              >
+                <div className="absolute -top-4 -right-4 bg-brand-accent/20 w-12 h-12 rounded-full blur-xl animate-pulse" />
+              </div>
+              <div
+                className="w-[110%] h-12 -mt-2 rounded-xl shadow-lg transition-colors duration-500"
+                style={{
+                  backgroundColor: fabrics.find((f) => f.id === fabric)?.hex_code,
                 }}
               ></div>
-              <div
-                className="w-6 h-12 rounded-b-lg shadow-md transition-colors duration-500"
-                style={{
-                  backgroundColor: materials.find((m) => m.id === material)
-                    ?.hex_code,
-                }}
-              ></div>
-            </div>
+              <div className="flex gap-16 mt-0">
+                <div
+                  className="w-6 h-12 rounded-b-lg shadow-md transition-colors duration-500"
+                  style={{
+                    backgroundColor: materials.find((m) => m.id === material)
+                      ?.hex_code,
+                  }}
+                ></div>
+                <div
+                  className="w-6 h-12 rounded-b-lg shadow-md transition-colors duration-500"
+                  style={{
+                    backgroundColor: materials.find((m) => m.id === material)
+                      ?.hex_code,
+                  }}
+                ></div>
+              </div>
 
-            <div className="mt-8 text-center">
-              <p className="text-xs font-mono font-bold uppercase tracking-widest text-brand-accent">
-                Vista Previa Configurador
-              </p>
-              <p className="text-sm text-gray-400">
-                Artesanía personalizada por Angela Mueblería
-              </p>
-            </div>
-          </motion.div>
+              <div className="mt-8 text-center">
+                <p className="text-xs font-mono font-bold uppercase tracking-widest text-brand-accent">
+                  Vista Previa Configurador
+                </p>
+                <p className="text-sm text-gray-400">
+                  Artesanía personalizada por Angela Mueblería
+                </p>
+              </div>
+            </motion.div>
+          )}
 
           <div className="absolute bottom-6 right-6 flex gap-2">
             <button className="p-3 bg-white shadow-xl rounded-full hover:bg-brand-accent hover:text-white transition-all">

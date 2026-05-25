@@ -10,6 +10,7 @@ import {
   Trash2,
   X,
   RefreshCw,
+  Box,
 } from "lucide-react";
 import { api } from "../services/api"; // Corrected import
 import { useAdmin } from "../hooks/useAdmin"; // Use the new hook
@@ -592,15 +593,21 @@ export const AdminDashboard = () => {
                       <input required type="number" name="base_price" placeholder="Precio Base" className="flex-1 px-3 py-1.5 border rounded-lg text-sm" />
                       <input required name="wood_type" placeholder="Tipo Madera" className="flex-1 px-3 py-1.5 border rounded-lg text-sm" />
                     </div>
-                    <label className="text-[10px] uppercase font-bold text-gray-500 mt-1">Imagen Base:</label>
-                    <input required type="file" name="image_file" accept="image/*" className="px-3 py-1 border rounded-lg text-sm bg-white" />
+                    <label className="text-[10px] uppercase font-bold text-gray-500 mt-1">Diseño 3D (.glb) o Imagen:</label>
+                    <input required type="file" name="image_file" accept=".glb,image/*" className="px-3 py-1 border rounded-lg text-sm bg-white" />
                     <button type="submit" className="py-2 mt-1 bg-brand-primary text-white rounded-lg text-sm font-bold">Añadir Mueble</button>
                   </form>
                   <div className="space-y-2">
                     {customFurnitures.map(f => (
                       <div key={f.id} className="flex justify-between items-center p-2 hover:bg-paper rounded-lg border">
                         <div className="flex gap-2 items-center">
-                          <img src={api.getImageUrl(f.image_url)} className="w-10 h-10 rounded object-cover" />
+                          {f.image_url?.endsWith('.glb') ? (
+                            <div className="w-10 h-10 bg-brand-accent/10 rounded flex items-center justify-center text-brand-accent" title="Modelo 3D">
+                              <Box size={20} />
+                            </div>
+                          ) : (
+                            <img src={api.getImageUrl(f.image_url)} className="w-10 h-10 rounded object-cover" />
+                          )}
                           <div>
                             <p className="text-sm font-bold">{f.name}</p>
                             <p className="text-[10px] font-mono text-gray-500">{f.wood_type} | ${f.base_price}</p>
