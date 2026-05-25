@@ -103,6 +103,9 @@ export const ResetPasswordPage = ({ onChangePage }) => {
                   <input
                     required
                     type={showPassword ? "text" : "password"}
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    autoComplete="off"
                     className="w-full pl-10 pr-10 py-3 bg-paper rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-accent/50 transition-all text-sm"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -130,6 +133,9 @@ export const ResetPasswordPage = ({ onChangePage }) => {
                   <input
                     required
                     type={showPassword ? "text" : "password"}
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    autoComplete="off"
                     className="w-full pl-10 pr-3 py-3 bg-paper rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-accent/50 transition-all text-sm"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}

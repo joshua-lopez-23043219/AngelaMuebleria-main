@@ -149,6 +149,10 @@ export const LoginPage = ({ onAuth }) => {
                     required
                     type="email"
                     placeholder="tu@correo.com"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck="false"
+                    autoComplete="off"
                     className="w-full pl-10 pr-4 py-3 bg-paper rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-accent/50 transition-all text-sm"
                     value={formData.email}
                     onChange={(e) =>
@@ -183,6 +187,10 @@ export const LoginPage = ({ onAuth }) => {
                   </label>
                   <input
                     required
+                    autoCapitalize="words"
+                    autoCorrect="off"
+                    spellCheck="false"
+                    autoComplete="off"
                     className="w-full px-4 py-3 bg-paper rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-accent/50 transition-all text-sm"
                     value={formData.name}
                     onChange={(e) =>
@@ -200,6 +208,10 @@ export const LoginPage = ({ onAuth }) => {
                   <input
                     required
                     placeholder="Ej: 8888 8888"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck="false"
+                    autoComplete="off"
                     className="w-full px-4 py-3 bg-paper rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-accent/50 transition-all text-sm"
                     value={formData.phone}
                     onChange={(e) =>
@@ -251,6 +263,10 @@ export const LoginPage = ({ onAuth }) => {
               <input
                 required
                 type="email"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck="false"
+                autoComplete="off"
                 className="w-full px-4 py-3 bg-paper rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-accent/50 transition-all text-sm"
                 value={formData.email}
                 onChange={(e) =>
@@ -278,6 +294,9 @@ export const LoginPage = ({ onAuth }) => {
                 <input
                   required
                   type={showPassword ? "text" : "password"}
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  autoComplete="off"
                   className="w-full pl-4 pr-10 py-3 bg-paper rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-accent/50 transition-all text-sm"
                   value={formData.password}
                   onChange={(e) =>
