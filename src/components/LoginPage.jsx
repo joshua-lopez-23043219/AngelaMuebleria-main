@@ -62,6 +62,20 @@ export const LoginPage = ({ onAuth }) => {
             email: formData.email,
             password: formData.password,
           });
+      
+      // Google Analytics event tracking
+      if (window.gtag) {
+        if (isRegister) {
+          window.gtag("event", "sign_up", {
+            method: "email"
+          });
+        } else {
+          window.gtag("event", "login", {
+            method: "email"
+          });
+        }
+      }
+      
       onAuth(data);
     } catch (e) {
       setError(e.message);

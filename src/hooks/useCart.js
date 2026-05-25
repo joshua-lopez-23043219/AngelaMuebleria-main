@@ -24,11 +24,85 @@ export function useCart(user) {
       }
       return [...prev, { ...product, quantity: 1 }];
     });
+
+    // Google Analytics tracking
+    if (window.gtag) {
+      window.gtag("event", "add_to_cart", {
+        currency: "NIO",
+        value: product.price,
+        items: [{
+          item_id: String(product.id),
+          item_name: product.name,
+          price: product.price,
+          quantity: 1
+        }]
+      });
+    }
+
     setIsCartOpen(true);
   };
 
   const removeFromCart = (id) => {
-    setCart((prev) => prev.filter((p) => p.id !== id));
+    setCart((prev) => {
+      const item = prev.find(p => p.id === id);
+      if (item && window.gtag) {
+        window.gtag("event", "remove_from_cart", {
+          currency: "NIO",
+          value: item.price * item.quantity,
+          items: [{
+            item_id: String(item.id),
+            item_name: item.name,
+            price: item.price,
+            quantity: item.quantity
+          }]
+        });
+      }
+      return prev.filter((p) => p.id !== id);
+    });
+  };
+
+  const updateQuantity = (id, amount) => {
+    setCart((prev) => {
+      const item = prev.find((p) => p.id === id);
+      if (!item) return prev;
+      
+      const newQty = item.quantity + amount;
+      
+      // Google Analytics tracking
+      if (window.gtag) {
+        if (amount > 0) {
+          window.gtag("event", "add_to_cart", {
+            currency: "NIO",
+            value: item.price,
+            items: [{
+              item_id: String(item.id),
+              item_name: item.name,
+              price: item.price,
+              quantity: amount
+            }]
+          });
+        } else if (amount < 0) {
+          window.gtag("event", "remove_from_cart", {
+            currency: "NIO",
+            value: item.price,
+            items: [{
+              item_id: String(item.id),
+              item_name: item.name,
+              price: item.price,
+              quantity: Math.abs(amount)
+            }]
+          });
+        }
+      }
+      
+      if (newQty <= 0) {
+        return prev.filter((p) => p.id !== id);
+      }
+      
+      return prev.map((p) =>
+        p.id === id ? { ...p, quantity: newQty } : p
+      );
+    });
   };
 
   const applyDiscount = async (code) => {
@@ -218,6 +292,23 @@ export function useCart(user) {
         discount_code: discount?.code || null,
         ...paymentData,
       });
+
+      // Google Analytics tracking for purchases (e.g. PayPal/receipts)
+      if (window.gtag) {
+        window.gtag("event", "purchase", {
+          transaction_id: paymentData.paypal_order_id || "ORDER_" + Math.random().toString(36).substring(2, 11),
+          value: cartTotal,
+          currency: "NIO",
+          coupon: discount?.code || "",
+          items: cart.map(item => ({
+            item_id: String(item.id),
+            item_name: item.name,
+            price: item.price,
+            quantity: item.quantity
+          }))
+        });
+      }
+
       setCart([]);
       setDiscount(null);
       setIsCartOpen(false);
@@ -233,6 +324,7 @@ export function useCart(user) {
     setIsCartOpen,
     addToCart,
     removeFromCart,
+    updateQuantity,
     checkout,
     applyDiscount,
     clearDiscount,

@@ -179,6 +179,7 @@ export default function App() {
         onClose={() => cart.setIsCartOpen(false)}
         items={cart.cart}
         onRemove={cart.removeFromCart}
+        onUpdateQuantity={cart.updateQuantity}
         onCheckout={handleCheckout}
         total={cart.cartTotal}
         rawTotal={cart.cartRawTotal}

@@ -8,6 +8,7 @@ export const CartDropdown = ({
   onClose,
   items,
   onRemove,
+  onUpdateQuantity,
   onCheckout,
   total,
   rawTotal,
@@ -153,11 +154,34 @@ export const CartDropdown = ({
                           referrerPolicy="no-referrer"
                         />
 
-                        <div className="flex-1">
-                          <h4 className="font-medium text-sm">{item.name}</h4>
-                          <p className="text-xs text-brand-accent font-bold">
-                            C${item.price.toLocaleString()} x {item.quantity}
-                          </p>
+                        <div className="flex-1 flex flex-col justify-between">
+                          <h4 className="font-medium text-sm text-gray-800 line-clamp-1">{item.name}</h4>
+                          <div className="flex items-center justify-between mt-1">
+                            <span className="text-xs text-brand-accent font-bold">
+                              C${item.price.toLocaleString()}
+                            </span>
+                            
+                            {/* Quantity control controls */}
+                            <div className="flex items-center bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                              <button
+                                type="button"
+                                onClick={() => onUpdateQuantity && onUpdateQuantity(item.id, -1)}
+                                className="px-2 py-0.5 text-gray-600 hover:bg-gray-200 font-bold text-xs transition-colors"
+                              >
+                                -
+                              </button>
+                              <span className="px-2 text-xs font-semibold text-gray-800 bg-white">
+                                {item.quantity}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => onUpdateQuantity && onUpdateQuantity(item.id, 1)}
+                                className="px-2 py-0.5 text-gray-600 hover:bg-gray-200 font-bold text-xs transition-colors"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
                         </div>
                         <button
                           onClick={() => onRemove(item.id)}
