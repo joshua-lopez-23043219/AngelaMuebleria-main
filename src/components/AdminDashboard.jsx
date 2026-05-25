@@ -41,7 +41,13 @@ export const AdminDashboard = () => {
   const [customColors, setCustomColors] = useState([]);
   const [shippingCosts, setShippingCosts] = useState({});
 
-  const [activeTab, setActiveTab] = useState("dashboard"); // "dashboard" | "pedidos"
+  const [activeTab, setActiveTab] = useState("dashboard"); // "dashboard" | "pedidos" | "combos" | "email"
+  const [emailForm, setEmailForm] = useState({
+    subject: "",
+    title: "",
+    message: "",
+  });
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   const [combos, setCombos] = useState([]);
   const [categoriesList, setCategoriesList] = useState([]);
@@ -205,6 +211,29 @@ export const AdminDashboard = () => {
     }
   };
 
+  const handleSendMassEmail = async (e) => {
+    e.preventDefault();
+    if (!emailForm.subject.trim() || !emailForm.title.trim() || !emailForm.message.trim()) {
+      alert("Por favor rellena todos los campos.");
+      return;
+    }
+
+    if (!confirm("¿Estás seguro de que deseas enviar este correo masivo a todos los clientes y suscriptores?")) {
+      return;
+    }
+
+    setSendingEmail(true);
+    try {
+      const res = await api.admin.sendMassEmail(emailForm);
+      alert(res.detail || "Correo masivo enviado exitosamente.");
+      setEmailForm({ subject: "", title: "", message: "" });
+    } catch (err) {
+      alert("Error al enviar el correo masivo: " + err.message);
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   const loadCustomizations = async () => {
     try {
       setCustomFurnitures(await api.customizations.getFurnitures());
@@ -351,6 +380,12 @@ export const AdminDashboard = () => {
               className={`pb-2 font-bold transition-all ${activeTab === 'combos' ? 'text-brand-accent border-b-2 border-brand-accent' : 'text-gray-400 hover:text-gray-600'}`}
             >
               Configuración de Combos
+            </button>
+            <button
+              onClick={() => setActiveTab('email')}
+              className={`pb-2 font-bold transition-all ${activeTab === 'email' ? 'text-brand-accent border-b-2 border-brand-accent' : 'text-gray-400 hover:text-gray-600'}`}
+            >
+              Correo Masivo
             </button>
           </div>
           {admin.lastUpdated && activeTab === 'dashboard' && (
@@ -1045,6 +1080,72 @@ export const AdminDashboard = () => {
                   </div>
                 )}
               </div>
+            </div>
+          </section>
+        )}
+
+        {activeTab === 'email' && (
+          <section className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+            <div className="flex justify-between items-center border-b pb-2">
+              <h2 className="text-2xl font-serif font-bold">Envío de Correo Masivo</h2>
+              <span className="bg-brand-primary text-white px-3 py-1 rounded-full text-xs font-bold">
+                Marketing y Boletines
+              </span>
+            </div>
+
+            <div className="max-w-2xl bg-white p-8 rounded-3xl border border-brand-accent/10 shadow-sm space-y-6">
+              <div className="space-y-2">
+                <h3 className="text-lg font-serif font-bold text-gray-800">Enviar Campaña a Clientes y Suscriptores</h3>
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  Esta herramienta permite enviar un correo informativo masivo a todos los clientes registrados y usuarios suscritos al boletín de noticias de Angela Mueblería. El correo incluirá automáticamente una sección destacada con los primeros 10 productos activos de tu catálogo junto con sus precios y descripciones.
+                </p>
+              </div>
+
+              <form onSubmit={handleSendMassEmail} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Asunto del Correo</label>
+                  <input
+                    required
+                    type="text"
+                    placeholder="Ej: ¡Descubre nuestro catálogo exclusivo de temporada!"
+                    value={emailForm.subject}
+                    onChange={(e) => setEmailForm({ ...emailForm, subject: e.target.value })}
+                    className="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-1 focus:ring-brand-accent focus:outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Título del Boletín (Encabezado)</label>
+                  <input
+                    required
+                    type="text"
+                    placeholder="Ej: Nuevos mimbre y diseños de temporada"
+                    value={emailForm.title}
+                    onChange={(e) => setEmailForm({ ...emailForm, title: e.target.value })}
+                    className="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-1 focus:ring-brand-accent focus:outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Mensaje / Introducción</label>
+                  <textarea
+                    required
+                    rows={6}
+                    placeholder="Escribe el mensaje introductorio para tus clientes. Ej: Nos complace presentarte nuestra más reciente colección de muebles artesanales..."
+                    value={emailForm.message}
+                    onChange={(e) => setEmailForm({ ...emailForm, message: e.target.value })}
+                    className="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-1 focus:ring-brand-accent focus:outline-none font-sans"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={sendingEmail}
+                  className="w-full bg-brand-primary hover:bg-brand-accent text-white font-bold py-3.5 rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  {sendingEmail ? "Enviando correos..." : "Enviar Correo Masivo ✉"}
+                </button>
+              </form>
             </div>
           </section>
         )}

@@ -192,6 +192,11 @@ export const api = {
 
   admin: {
     getStats: () => apiFetch("/apiPedidos/Pedido/stats/").catch(() => null),
+    sendMassEmail: (data) =>
+      apiFetch("/apiUsuarios/Usuario/enviar_correo_masivo/", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
   },
 
   upload: async (file, type) => {
