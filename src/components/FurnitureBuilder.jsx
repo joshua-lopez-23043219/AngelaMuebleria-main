@@ -62,6 +62,27 @@ export const FurnitureBuilder = () => {
     loadSavedDesigns();
   };
 
+  const handleQuote = () => {
+    const activeWood = materials.find(m => m.id === material);
+    const is3d = selectedFurniture?.image_url?.endsWith('.glb');
+    const activeFabric = is3d ? null : fabrics.find(f => f.id === fabric);
+    
+    const price = Number(selectedFurniture?.base_price || 0) + Number(activeWood?.price_modifier || 0) + (is3d ? 0 : Number(activeFabric?.price_modifier || 0));
+
+    let text = `Hola, me gustaría cotizar el siguiente diseño personalizado:\n\n`;
+    text += `*Mueble:* ${selectedFurniture.name}\n`;
+    text += `*Acabado/Pintura:* ${activeWood ? activeWood.name : 'Color original'}\n`;
+    if (!is3d) {
+      text += `*Tapizado:* ${activeFabric ? activeFabric.name : 'Material original'}\n`;
+    }
+    text += `*Dimensiones:* ${selectedFurniture.dimensions || 'Medidas estándar'}\n`;
+    text += `*Precio Estimado:* C$${price.toLocaleString()}\n\n`;
+    text += `¿Me podrían dar más detalles para realizar el pedido?`;
+
+    const encodedText = encodeURIComponent(text);
+    window.open(`https://wa.me/50588888888?text=${encodedText}`, '_blank');
+  };
+
   const applyColors = () => {
     const modelViewer = modelRef.current;
     if (!modelViewer || !modelViewer.model) return;
@@ -84,6 +105,13 @@ export const FurnitureBuilder = () => {
 
     const mats = modelViewer.model.materials;
     if (mats.length === 0) return;
+
+    // Si el modelo solo tiene 1 material en total, cambiarle el color pintaría TODO el objeto
+    // (mimbre, cojín, centro de periódico) de forma uniforme, perdiendo el contraste y los detalles.
+    // Para proteger el contraste y los detalles del modelo original, no aplicamos color factor en modelos de 1 material.
+    if (mats.length <= 1) {
+      return;
+    }
 
     const is3d = selectedFurniture?.image_url?.endsWith('.glb');
     let matchedAny = false;
@@ -364,6 +392,8 @@ export const FurnitureBuilder = () => {
               auto-rotate
               ar
               ar-modes="webxr scene-viewer quick-look"
+              ar-placement="floor"
+              ar-scale="fixed"
               touch-action="pan-y"
               shadow-intensity="1"
               style={{ width: "100%", height: "100%", outline: "none" }}
@@ -425,14 +455,6 @@ export const FurnitureBuilder = () => {
             </motion.div>
           )}
 
-          <div className="absolute bottom-6 right-6 flex gap-2">
-            <button className="p-3 bg-white shadow-xl rounded-full hover:bg-brand-accent hover:text-white transition-all">
-              <Box size={20} />
-            </button>
-            <button className="p-3 bg-white shadow-xl rounded-full hover:bg-brand-accent hover:text-white transition-all">
-              <Layers size={20} />
-            </button>
-          </div>
         </div>
 
         {/* Panel de Control */}
@@ -514,7 +536,10 @@ export const FurnitureBuilder = () => {
                 ).toLocaleString()}
               </p>
             </div>
-            <button className="w-full py-4 bg-brand-primary text-white rounded-2xl font-bold hover:bg-brand-accent transition-all">
+            <button 
+              onClick={handleQuote}
+              className="w-full py-4 bg-brand-primary text-white rounded-2xl font-bold hover:bg-brand-accent transition-all"
+            >
               Cotizar Diseño
             </button>
           </div>
