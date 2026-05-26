@@ -106,13 +106,6 @@ export const FurnitureBuilder = () => {
     const mats = modelViewer.model.materials;
     if (mats.length === 0) return;
 
-    // Si el modelo solo tiene 1 material en total, cambiarle el color pintaría TODO el objeto
-    // (mimbre, cojín, centro de periódico) de forma uniforme, perdiendo el contraste y los detalles.
-    // Para proteger el contraste y los detalles del modelo original, no aplicamos color factor en modelos de 1 material.
-    if (mats.length <= 1) {
-      return;
-    }
-
     const is3d = selectedFurniture?.image_url?.endsWith('.glb');
     let matchedAny = false;
 
