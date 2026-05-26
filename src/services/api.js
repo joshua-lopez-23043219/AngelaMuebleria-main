@@ -225,6 +225,8 @@ export const api = {
     },
     createFurniture: (data) => 
       apiFetch("/apiPersonalizacion/MuebleBase/", { method: "POST", body: JSON.stringify(data) }),
+    updateFurniture: (id, data) => 
+      apiFetch(`/apiPersonalizacion/MuebleBase/${id}/`, { method: "PATCH", body: JSON.stringify(data) }),
     deleteFurniture: (id) => 
       apiFetch(`/apiPersonalizacion/MuebleBase/${id}/`, { method: "DELETE" }),
     getColors: async () => {

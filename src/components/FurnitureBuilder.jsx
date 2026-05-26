@@ -8,6 +8,7 @@ import {
   RotateCcw,
   ChevronLeft,
   Sparkles,
+  Trash2,
 } from "lucide-react";
 import { api } from "../services/api";
 
@@ -21,8 +22,45 @@ export const FurnitureBuilder = () => {
   const [materials, setMaterials] = useState([]);
   const [fabrics, setFabrics] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [savedDesigns, setSavedDesigns] = useState([]);
 
   const modelRef = useRef(null);
+
+  const loadSavedDesigns = () => {
+    const list = JSON.parse(localStorage.getItem('saved_designs') || '[]');
+    setSavedDesigns(list);
+  };
+
+  useEffect(() => {
+    loadSavedDesigns();
+  }, []);
+
+  const handleReset = () => {
+    if (materials.length > 0) setMaterial(materials[0].id);
+    if (fabrics.length > 0) setFabric(fabrics[0].id);
+    setSize("medium");
+  };
+
+  const handleSaveDesign = () => {
+    const activeWood = materials.find(m => m.id === material);
+    const activeFabric = fabrics.find(f => f.id === fabric);
+    const is3d = selectedFurniture?.image_url?.endsWith('.glb');
+    
+    const saved = {
+      id: Date.now().toString(),
+      furniture: selectedFurniture,
+      wood: activeWood,
+      fabric: is3d ? null : activeFabric,
+      size: size,
+      totalPrice: Number(selectedFurniture?.base_price || 0) + Number(activeWood?.price_modifier || 0) + (is3d ? 0 : Number(activeFabric?.price_modifier || 0)),
+      date: new Date().toLocaleDateString()
+    };
+
+    const existing = JSON.parse(localStorage.getItem('saved_designs') || '[]');
+    localStorage.setItem('saved_designs', JSON.stringify([saved, ...existing]));
+    alert("¡Diseño guardado con éxito! Puedes revisarlo en la galería de inicio.");
+    loadSavedDesigns();
+  };
 
   const applyColors = () => {
     const modelViewer = modelRef.current;
@@ -179,43 +217,112 @@ export const FurnitureBuilder = () => {
             </motion.div>
           ))}
         </div>
+
+        {savedDesigns.length > 0 && (
+          <section className="space-y-6 pt-12 border-t border-brand-accent/10">
+            <h2 className="text-3xl font-serif font-bold text-center">
+              Mis Diseños <span className="italic text-brand-accent">Guardados</span>
+            </h2>
+            <p className="text-gray-500 text-center max-w-2xl mx-auto -mt-4">
+              Tus configuraciones personalizadas guardadas localmente.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-6">
+              {savedDesigns.map((sd) => (
+                <div key={sd.id} className="bg-white border border-brand-accent/15 rounded-3xl p-6 shadow-sm hover:shadow-xl transition-all duration-500 flex flex-col justify-between">
+                  <div className="flex gap-4">
+                    {sd.furniture.image_url?.endsWith('.glb') ? (
+                      <div className="w-20 h-20 bg-brand-accent/10 rounded-2xl flex items-center justify-center text-brand-accent">
+                        <Box size={32} />
+                      </div>
+                    ) : (
+                      <img src={api.getImageUrl(sd.furniture.image_url) || sd.furniture.image} className="w-20 h-20 object-cover rounded-2xl border" />
+                    )}
+                    <div className="space-y-1 flex-1">
+                      <h4 className="font-serif font-bold text-lg">{sd.furniture.name}</h4>
+                      <p className="text-xs text-gray-500">Madera: {sd.wood?.name || 'N/A'}</p>
+                      {!sd.furniture.image_url?.endsWith('.glb') && (
+                        <p className="text-xs text-gray-500">Tapizado: {sd.fabric?.name || 'N/A'}</p>
+                      )}
+                      {sd.furniture.dimensions && (
+                        <p className="text-xs text-gray-400">Medidas: {sd.furniture.dimensions}</p>
+                      )}
+                      <p className="text-base font-bold text-brand-accent mt-1">C${sd.totalPrice?.toLocaleString()}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-6 pt-4 border-t border-dashed">
+                    <button
+                      onClick={() => {
+                        setSelectedFurniture(sd.furniture);
+                        setMaterial(sd.wood?.id || null);
+                        if (sd.fabric) setFabric(sd.fabric.id);
+                        setSize(sd.size || "medium");
+                      }}
+                      className="flex-1 py-2 bg-brand-primary text-white rounded-xl text-xs font-bold hover:bg-brand-accent transition-all text-center"
+                    >
+                      Cargar en Diseñador
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm("¿Eliminar este diseño guardado?")) {
+                          const updated = savedDesigns.filter(item => item.id !== sd.id);
+                          localStorage.setItem('saved_designs', JSON.stringify(updated));
+                          loadSavedDesigns();
+                        }
+                      }}
+                      className="px-3 py-2 border border-red-200 text-red-500 hover:bg-red-50 rounded-xl text-xs font-bold transition-all"
+                      title="Eliminar"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     );
   }
 
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-12">
-      <header className="flex justify-between items-end">
-        <div>
+      <header className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 border-b border-brand-accent/5 pb-6">
+        <div className="space-y-2 w-full md:w-auto">
           <button
             onClick={() => setSelectedFurniture(null)}
-            className="flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-brand-accent mb-4 transition-colors"
+            className="flex items-center gap-1 text-xs font-bold text-gray-400 hover:text-brand-accent transition-colors"
           >
-            <ChevronLeft size={16} /> Volver a Galería
+            <ChevronLeft size={14} /> Volver a Galería
           </button>
-          <h1 className="text-4xl font-serif font-bold">
+          <h1 className="text-2xl md:text-4xl font-serif font-bold tracking-tight">
             Personalizando:{" "}
-            <span className="italic text-brand-accent">
+            <span className="italic text-brand-accent block md:inline-block">
               {selectedFurniture.name}
             </span>
           </h1>
-          <p className="text-gray-500 text-sm">
+          <p className="text-xs text-gray-400">
             Ajusta los materiales para que se adapten a tu espacio.
           </p>
         </div>
-        <div className="flex gap-4">
-          <button className="flex items-center gap-2 px-6 py-2 border border-brand-accent/20 rounded-full text-sm font-bold hover:bg-paper transition-all">
-            <RotateCcw size={16} /> Reiniciar
+        <div className="flex gap-2 w-full md:w-auto">
+          <button
+            onClick={handleReset}
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2 border border-brand-accent/20 rounded-full text-xs font-bold hover:bg-paper transition-all"
+          >
+            <RotateCcw size={14} /> Reiniciar
           </button>
-          <button className="flex items-center gap-2 px-6 py-2 bg-brand-primary text-white rounded-full text-sm font-bold hover:bg-brand-accent transition-all shadow-lg shadow-brand-primary/10">
-            <Save size={16} /> Guardar Diseño
+          <button
+            onClick={handleSaveDesign}
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2 bg-brand-primary text-white rounded-full text-xs font-bold hover:bg-brand-accent transition-all shadow-lg shadow-brand-primary/10"
+          >
+            <Save size={14} /> Guardar Diseño
           </button>
         </div>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
         {/* Renderizado del Mueble (Simulado 3D) */}
-        <div className="lg:col-span-2 aspect-video bg-paper rounded-3xl relative overflow-hidden flex items-center justify-center border border-brand-accent/10 shadow-inner">
+        <div className="lg:col-span-2 aspect-square md:aspect-video bg-paper rounded-3xl relative overflow-hidden flex items-center justify-center border border-brand-accent/10 shadow-inner">
           <div
             className="absolute inset-0 opacity-10"
             style={{
@@ -232,6 +339,9 @@ export const FurnitureBuilder = () => {
               alt={selectedFurniture.name}
               camera-controls
               auto-rotate
+              ar
+              ar-modes="webxr scene-viewer quick-look"
+              touch-action="pan-y"
               shadow-intensity="1"
               style={{ width: "100%", height: "100%", outline: "none" }}
               className="w-full h-full"
@@ -324,61 +434,62 @@ export const FurnitureBuilder = () => {
                   ></div>
                   <div className="flex-1">
                     <p className="text-sm font-medium">{m.name}</p>
-                    {m.price_modifier > 0 && <p className="text-[10px] text-brand-accent font-bold">+C${m.price_modifier}</p>}
+                    {Number(m.price_modifier) > 0 && <p className="text-[10px] text-brand-accent font-bold">+C${Number(m.price_modifier).toLocaleString()}</p>}
                   </div>
                 </button>
               ))}
             </div>
           </section>
 
-          <section className="space-y-4">
-            <div className="flex items-center gap-2 text-brand-accent">
-              <Layers size={18} />
-              <h3 className="font-bold text-sm uppercase tracking-widest">
-                Tapizado
-              </h3>
-            </div>
-            <div className="grid grid-cols-1 gap-3">
-              {fabrics.map((f) => (
-                <button
-                  key={f.id}
-                  onClick={() => setFabric(f.id)}
-                  className={`flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${fabric === f.id ? "border-brand-accent bg-paper" : "border-paper hover:border-brand-accent/30"}`}
-                >
-                  <div
-                    className="w-8 h-8 rounded-full shadow-sm"
-                    style={{ backgroundColor: f.hex_code }}
-                  ></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{f.name}</p>
-                    {f.price_modifier > 0 && <p className="text-[10px] text-brand-accent font-bold">+C${f.price_modifier}</p>}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </section>
+          {/* Ocultamos tapizado para modelos 3D */}
+          {!selectedFurniture.image_url?.endsWith('.glb') && (
+            <section className="space-y-4">
+              <div className="flex items-center gap-2 text-brand-accent">
+                <Layers size={18} />
+                <h3 className="font-bold text-sm uppercase tracking-widest">
+                  Tapizado
+                </h3>
+              </div>
+              <div className="grid grid-cols-1 gap-3">
+                {fabrics.map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => setFabric(f.id)}
+                    className={`flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${fabric === f.id ? "border-brand-accent bg-paper" : "border-paper hover:border-brand-accent/30"}`}
+                  >
+                    <div
+                      className="w-8 h-8 rounded-full shadow-sm"
+                      style={{ backgroundColor: f.hex_code }}
+                    ></div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{f.name}</p>
+                      {Number(f.price_modifier) > 0 && <p className="text-[10px] text-brand-accent font-bold">+C${Number(f.price_modifier).toLocaleString()}</p>}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
 
           <section className="space-y-4">
             <h3 className="font-bold text-sm uppercase tracking-widest text-brand-accent">
               Dimensiones
             </h3>
-            <div className="flex gap-2">
-              {["small", "medium", "large"].map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setSize(s)}
-                  className={`flex-1 py-2 rounded-lg text-xs font-bold uppercase transition-all ${size === s ? "bg-brand-primary text-white" : "bg-paper text-gray-400 hover:text-brand-primary"}`}
-                >
-                  {s === "small" ? "P" : s === "medium" ? "M" : "G"}
-                </button>
-              ))}
-            </div>
+            <p className="text-sm font-medium text-gray-700 bg-paper p-3 rounded-xl border border-brand-accent/5">
+              {selectedFurniture?.dimensions || "Medida estándar (N/A)"}
+            </p>
           </section>
 
           <div className="pt-6 border-t border-dashed">
             <div className="flex justify-between items-center mb-4">
               <p className="text-gray-400 text-sm">Precio Estimado</p>
-              <p className="text-lg font-serif font-bold">C${((selectedFurniture?.base_price || 0) + (materials.find(m => m.id === material)?.price_modifier || 0) + (fabrics.find(f => f.id === fabric)?.price_modifier || 0)).toLocaleString()}</p>
+              <p className="text-lg font-serif font-bold">
+                C${(
+                  Number(selectedFurniture?.base_price || 0) +
+                  Number(materials.find(m => m.id === material)?.price_modifier || 0) +
+                  (selectedFurniture.image_url?.endsWith('.glb') ? 0 : Number(fabrics.find(f => f.id === fabric)?.price_modifier || 0))
+                ).toLocaleString()}
+              </p>
             </div>
             <button className="w-full py-4 bg-brand-primary text-white rounded-2xl font-bold hover:bg-brand-accent transition-all">
               Cotizar Diseño

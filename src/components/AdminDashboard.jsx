@@ -39,6 +39,7 @@ export const AdminDashboard = () => {
   const [viewReceipt, setViewReceipt] = useState(null);
 
   const [customFurnitures, setCustomFurnitures] = useState([]);
+  const [editingFurniture, setEditingFurniture] = useState(null);
   const [customColors, setCustomColors] = useState([]);
   const [shippingCosts, setShippingCosts] = useState({});
 
@@ -568,34 +569,97 @@ export const AdminDashboard = () => {
                   Muebles Base (Diseño)
                 </h2>
                 <div className="bg-white rounded-2xl border border-brand-accent/10 p-4 space-y-4">
-                  <form onSubmit={async (e) => {
-                    e.preventDefault();
-                    const formData = new FormData(e.target);
-                    const file = formData.get("image_file");
-                    let imageUrl = "";
-                    if (file && file.size > 0) {
-                      const res = await api.upload(file, "image");
-                      imageUrl = res.url;
-                    } else {
-                      return alert("Debe subir una imagen");
-                    }
-                    await api.customizations.createFurniture({
-                      name: formData.get("name"),
-                      base_price: formData.get("base_price"),
-                      image_url: imageUrl,
-                      wood_type: formData.get("wood_type") || "N/A"
-                    });
-                    e.target.reset();
-                    loadCustomizations();
-                  }} className="flex flex-col gap-2 border p-3 rounded-xl bg-paper/30">
-                    <input required name="name" placeholder="Nombre (ej. Sofá)" className="px-3 py-1.5 border rounded-lg text-sm" />
+                  <form
+                    key={editingFurniture ? editingFurniture.id : "new"}
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      const formData = new FormData(e.target);
+                      try {
+                        const file = formData.get("image_file");
+                        let imageUrl = editingFurniture ? editingFurniture.image_url : "";
+                        if (file && file.size > 0) {
+                          const res = await api.upload(file, "image");
+                          imageUrl = res.url;
+                        } else if (!editingFurniture) {
+                          return alert("Debe subir una imagen o modelo 3D");
+                        }
+                        
+                        const data = {
+                          name: formData.get("name"),
+                          base_price: formData.get("base_price"),
+                          image_url: imageUrl,
+                          wood_type: formData.get("wood_type") || "N/A",
+                          dimensions: formData.get("dimensions") || ""
+                        };
+
+                        if (editingFurniture) {
+                          await api.customizations.updateFurniture(editingFurniture.id, data);
+                          setEditingFurniture(null);
+                        } else {
+                          await api.customizations.createFurniture(data);
+                        }
+                        e.target.reset();
+                        loadCustomizations();
+                      } catch (err) {
+                        alert(err.message || "Error al guardar");
+                      }
+                    }}
+                    className="flex flex-col gap-2 border p-3 rounded-xl bg-paper/30"
+                  >
+                    <input
+                      required
+                      name="name"
+                      defaultValue={editingFurniture ? editingFurniture.name : ""}
+                      placeholder="Nombre (ej. Sofá)"
+                      className="px-3 py-1.5 border rounded-lg text-sm"
+                    />
                     <div className="flex gap-2">
-                      <input required type="number" name="base_price" placeholder="Precio Base" className="flex-1 px-3 py-1.5 border rounded-lg text-sm" />
-                      <input required name="wood_type" placeholder="Tipo Madera" className="flex-1 px-3 py-1.5 border rounded-lg text-sm" />
+                      <input
+                        required
+                        type="number"
+                        name="base_price"
+                        defaultValue={editingFurniture ? editingFurniture.base_price : ""}
+                        placeholder="Precio Base"
+                        className="flex-1 px-3 py-1.5 border rounded-lg text-sm"
+                      />
+                      <input
+                        required
+                        name="wood_type"
+                        defaultValue={editingFurniture ? editingFurniture.wood_type : ""}
+                        placeholder="Tipo Madera"
+                        className="flex-1 px-3 py-1.5 border rounded-lg text-sm"
+                      />
                     </div>
-                    <label className="text-[10px] uppercase font-bold text-gray-500 mt-1">Diseño 3D (.glb) o Imagen:</label>
-                    <input required type="file" name="image_file" accept=".glb,image/*" className="px-3 py-1 border rounded-lg text-sm bg-white" />
-                    <button type="submit" className="py-2 mt-1 bg-brand-primary text-white rounded-lg text-sm font-bold">Añadir Mueble</button>
+                    <input
+                      name="dimensions"
+                      defaultValue={editingFurniture ? editingFurniture.dimensions : ""}
+                      placeholder="Dimensiones (ej. 45x45x90 cm)"
+                      className="px-3 py-1.5 border rounded-lg text-sm"
+                    />
+                    <label className="text-[10px] uppercase font-bold text-gray-500 mt-1">
+                      {editingFurniture ? "Reemplazar Diseño 3D (.glb) o Imagen (Opcional):" : "Diseño 3D (.glb) o Imagen:"}
+                    </label>
+                    <input
+                      required={!editingFurniture}
+                      type="file"
+                      name="image_file"
+                      accept=".glb,image/*"
+                      className="px-3 py-1 border rounded-lg text-sm bg-white"
+                    />
+                    <div className="flex gap-2 mt-1">
+                      <button type="submit" className="flex-1 py-2 bg-brand-primary text-white rounded-lg text-sm font-bold">
+                        {editingFurniture ? "Guardar Cambios" : "Añadir Mueble"}
+                      </button>
+                      {editingFurniture && (
+                        <button
+                          type="button"
+                          onClick={() => setEditingFurniture(null)}
+                          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-300"
+                        >
+                          Cancelar
+                        </button>
+                      )}
+                    </div>
                   </form>
                   <div className="space-y-2">
                     {customFurnitures.map(f => (
@@ -610,15 +674,26 @@ export const AdminDashboard = () => {
                           )}
                           <div>
                             <p className="text-sm font-bold">{f.name}</p>
-                            <p className="text-[10px] font-mono text-gray-500">{f.wood_type} | ${f.base_price}</p>
+                            <p className="text-[10px] font-mono text-gray-500">
+                              {f.wood_type} | ${f.base_price} {f.dimensions ? `| ${f.dimensions}` : ""}
+                            </p>
                           </div>
                         </div>
-                        <button onClick={async () => {
-                          if (confirm("¿Eliminar?")) {
-                            await api.customizations.deleteFurniture(f.id);
-                            loadCustomizations();
-                          }
-                        }} className="text-red-500 p-1 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => setEditingFurniture(f)}
+                            className="text-blue-500 p-1 hover:bg-blue-50 rounded"
+                            title="Editar"
+                          >
+                            <Edit3 size={16} />
+                          </button>
+                          <button onClick={async () => {
+                            if (confirm("¿Eliminar?")) {
+                              await api.customizations.deleteFurniture(f.id);
+                              loadCustomizations();
+                            }
+                          }} className="text-red-500 p-1 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
+                        </div>
                       </div>
                     ))}
                   </div>
