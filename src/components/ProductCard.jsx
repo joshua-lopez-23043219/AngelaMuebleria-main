@@ -70,6 +70,11 @@ export const ProductCard = ({
         <p className="text-sm text-gray-500 line-clamp-2">
           {product.description}
         </p>
+        {product.dimensions && (
+          <p className="text-xs text-gray-400 font-medium">
+            Medidas: {product.dimensions}
+          </p>
+        )}
         <div className="flex justify-between items-center pt-2">
           <span className="text-[10px] uppercase tracking-wider font-bold text-gray-400">
             {product.category || product.category_read}

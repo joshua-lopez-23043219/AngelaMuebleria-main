@@ -515,7 +515,14 @@ export const AdminDashboard = () => {
                             key={p.id}
                             className="hover:bg-paper/30 transition-colors"
                           >
-                            <td className="px-6 py-4 font-medium">{p.name}</td>
+                            <td className="px-6 py-4 font-medium">
+                              <div>{p.name}</div>
+                              {p.dimensions && (
+                                <div className="text-[11px] text-gray-400 font-normal mt-0.5">
+                                  {p.dimensions}
+                                </div>
+                              )}
+                            </td>
                             <td className="px-6 py-4 text-sm text-gray-500">
                               {p.category}
                             </td>
@@ -1299,6 +1306,12 @@ export const AdminDashboard = () => {
                   placeholder="Tipo de Madera"
                   defaultValue={editingProduct?.wood_type}
                   className="w-full px-4 py-2 border rounded-lg"
+                />
+                <input
+                  name="dimensions"
+                  placeholder="Dimensiones (ej. 45x45x90 cm)"
+                  defaultValue={editingProduct?.dimensions}
+                  className="sm:col-span-2 w-full px-4 py-2 border rounded-lg"
                 />
                 <div className="sm:col-span-2 flex items-center gap-2 px-1 py-2">
                   <input 
