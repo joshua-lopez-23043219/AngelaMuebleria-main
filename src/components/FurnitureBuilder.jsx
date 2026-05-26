@@ -91,10 +91,11 @@ export const FurnitureBuilder = () => {
     mats.forEach(mat => {
       const name = mat.name.toLowerCase();
       const isFabricMat = name.includes('fabric') || name.includes('tela') || name.includes('cushion') || name.includes('cojin') || name.includes('seat') || name.includes('asiento') || name.includes('respaldo') || name.includes('cuero') || name.includes('leather');
+      const isContrastMat = name.includes('news') || name.includes('paper') || name.includes('print') || name.includes('centro') || name.includes('backrest') || name.includes('decor') || name.includes('pattern') || name.includes('decal') || name.includes('picture') || name.includes('image') || name.includes('text') || name.includes('texture') || name.includes('contraste') || name.includes('interior') || name.includes('medallion') || name.includes('central');
 
       if (is3d) {
-        // En modelos 3D, si no es explícitamente un cojín/tela, le aplicamos el color de pintura seleccionado (woodColor)
-        if (!isFabricMat && woodColor) {
+        // En modelos 3D, si no es explícitamente un cojín/tela ni parte del diseño de contraste central (newspaper), le aplicamos woodColor
+        if (!isFabricMat && !isContrastMat && woodColor) {
           mat.pbrMetallicRoughness.setBaseColorFactor(woodColor);
           matchedAny = true;
         }
@@ -112,11 +113,12 @@ export const FurnitureBuilder = () => {
 
     if (!matchedAny && woodColor) {
       if (is3d) {
-        // Fallback para modelos 3D: aplicamos el color de pintura a todos los materiales no-telas
+        // Fallback para modelos 3D: aplicamos el color de pintura a todos los materiales no-telas y no-contrastes
         mats.forEach(mat => {
           const name = mat.name.toLowerCase();
           const isFabricMat = name.includes('fabric') || name.includes('tela') || name.includes('cushion') || name.includes('cojin') || name.includes('seat') || name.includes('asiento') || name.includes('respaldo') || name.includes('cuero') || name.includes('leather');
-          if (!isFabricMat) {
+          const isContrastMat = name.includes('news') || name.includes('paper') || name.includes('print') || name.includes('centro') || name.includes('backrest') || name.includes('decor') || name.includes('pattern') || name.includes('decal') || name.includes('picture') || name.includes('image') || name.includes('text') || name.includes('texture') || name.includes('contraste') || name.includes('interior') || name.includes('medallion') || name.includes('central');
+          if (!isFabricMat && !isContrastMat) {
             mat.pbrMetallicRoughness.setBaseColorFactor(woodColor);
           }
         });
