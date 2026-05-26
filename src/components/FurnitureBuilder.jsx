@@ -36,8 +36,8 @@ export const FurnitureBuilder = () => {
   }, []);
 
   const handleReset = () => {
-    if (materials.length > 0) setMaterial(materials[0].id);
-    if (fabrics.length > 0) setFabric(fabrics[0].id);
+    setMaterial(null);
+    setFabric(null);
     setSize("medium");
   };
 
@@ -85,27 +85,48 @@ export const FurnitureBuilder = () => {
     const mats = modelViewer.model.materials;
     if (mats.length === 0) return;
 
+    const is3d = selectedFurniture?.image_url?.endsWith('.glb');
     let matchedAny = false;
+
     mats.forEach(mat => {
       const name = mat.name.toLowerCase();
-      const isWood = name.includes('wood') || name.includes('madera') || name.includes('leg') || name.includes('base') || name.includes('estructura') || name.includes('palo') || name.includes('soporte');
-      const isFabric = name.includes('fabric') || name.includes('tela') || name.includes('cushion') || name.includes('cojin') || name.includes('seat') || name.includes('asiento') || name.includes('respaldo') || name.includes('cuero') || name.includes('leather');
-      
-      if (isWood && woodColor) {
-        mat.pbrMetallicRoughness.setBaseColorFactor(woodColor);
-        matchedAny = true;
-      } else if (isFabric && fabricColor) {
-        mat.pbrMetallicRoughness.setBaseColorFactor(fabricColor);
-        matchedAny = true;
+      const isFabricMat = name.includes('fabric') || name.includes('tela') || name.includes('cushion') || name.includes('cojin') || name.includes('seat') || name.includes('asiento') || name.includes('respaldo') || name.includes('cuero') || name.includes('leather');
+
+      if (is3d) {
+        // En modelos 3D, si no es explícitamente un cojín/tela, le aplicamos el color de pintura seleccionado (woodColor)
+        if (!isFabricMat && woodColor) {
+          mat.pbrMetallicRoughness.setBaseColorFactor(woodColor);
+          matchedAny = true;
+        }
+      } else {
+        const isWoodMat = name.includes('wood') || name.includes('madera') || name.includes('leg') || name.includes('base') || name.includes('estructura') || name.includes('palo') || name.includes('soporte');
+        if (isWoodMat && woodColor) {
+          mat.pbrMetallicRoughness.setBaseColorFactor(woodColor);
+          matchedAny = true;
+        } else if (isFabricMat && fabricColor) {
+          mat.pbrMetallicRoughness.setBaseColorFactor(fabricColor);
+          matchedAny = true;
+        }
       }
     });
 
-    if (!matchedAny) {
-      if (mats.length === 1 && fabricColor) {
-        mats[0].pbrMetallicRoughness.setBaseColorFactor(fabricColor);
-      } else if (mats.length >= 2) {
-        if (fabricColor) mats[0].pbrMetallicRoughness.setBaseColorFactor(fabricColor);
-        if (woodColor) mats[1].pbrMetallicRoughness.setBaseColorFactor(woodColor);
+    if (!matchedAny && woodColor) {
+      if (is3d) {
+        // Fallback para modelos 3D: aplicamos el color de pintura a todos los materiales no-telas
+        mats.forEach(mat => {
+          const name = mat.name.toLowerCase();
+          const isFabricMat = name.includes('fabric') || name.includes('tela') || name.includes('cushion') || name.includes('cojin') || name.includes('seat') || name.includes('asiento') || name.includes('respaldo') || name.includes('cuero') || name.includes('leather');
+          if (!isFabricMat) {
+            mat.pbrMetallicRoughness.setBaseColorFactor(woodColor);
+          }
+        });
+      } else {
+        if (mats.length === 1) {
+          mats[0].pbrMetallicRoughness.setBaseColorFactor(woodColor);
+        } else if (mats.length >= 2) {
+          mats[0].pbrMetallicRoughness.setBaseColorFactor(woodColor);
+          if (fabricColor) mats[1].pbrMetallicRoughness.setBaseColorFactor(fabricColor);
+        }
       }
     }
   };
@@ -141,8 +162,7 @@ export const FurnitureBuilder = () => {
         setMaterials(woods);
         setFabrics(fabs);
         
-        if (woods.length > 0) setMaterial(woods[0].id);
-        if (fabs.length > 0) setFabric(fabs[0].id);
+        // No seleccionar colores por defecto automáticamente
       } catch (e) {
         console.error(e);
       } finally {
@@ -334,6 +354,7 @@ export const FurnitureBuilder = () => {
 
           {selectedFurniture.image_url?.endsWith('.glb') ? (
             <model-viewer
+              key={selectedFurniture.id + "_" + (material ? "custom" : "original")}
               ref={modelRef}
               src={api.getImageUrl(selectedFurniture.image_url)}
               alt={selectedFurniture.name}
