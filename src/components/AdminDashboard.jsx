@@ -59,7 +59,8 @@ export const AdminDashboard = () => {
     nombre: "",
     activo: true,
     precio_combo: "",
-    productos: [{ producto_id: "", cantidad: 1 }]
+    productos: [{ producto_id: "", cantidad: 1 }],
+    imagen_url: ""
   });
 
   const loadCombosData = async () => {
@@ -117,6 +118,7 @@ export const AdminDashboard = () => {
         cantidad_requerida: firstProd ? parseInt(firstProd.cantidad) : 0,
         producto_asociado: secondProd ? parseInt(secondProd.producto_id) : null,
         cantidad_asociado: secondProd ? parseInt(secondProd.cantidad) : 0,
+        imagen_url: newCombo.imagen_url || null,
       };
 
       if (newCombo.id) {
@@ -132,7 +134,8 @@ export const AdminDashboard = () => {
         nombre: "",
         activo: true,
         precio_combo: "",
-        productos: [{ producto_id: "", cantidad: 1 }]
+        productos: [{ producto_id: "", cantidad: 1 }],
+        imagen_url: ""
       });
       loadCombosData();
     } catch (e) {
@@ -178,7 +181,8 @@ export const AdminDashboard = () => {
       nombre: c.nombre,
       activo: c.activo,
       precio_combo: String(c.precio_combo),
-      productos: prodList
+      productos: prodList,
+      imagen_url: c.imagen_url || ""
     });
   };
 
@@ -188,7 +192,8 @@ export const AdminDashboard = () => {
       nombre: "",
       activo: true,
       precio_combo: "",
-      productos: [{ producto_id: "", cantidad: 1 }]
+      productos: [{ producto_id: "", cantidad: 1 }],
+      imagen_url: ""
     });
   };
 
@@ -1080,6 +1085,39 @@ export const AdminDashboard = () => {
                     />
                   </div>
 
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Imagen del Combo (Opcional)</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={async (e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          try {
+                            const res = await api.upload(file, 'combo');
+                            setNewCombo(prev => ({ ...prev, imagen_url: res.url }));
+                          } catch (err) {
+                            alert("Error al subir la imagen del combo: " + err.message);
+                          }
+                        }
+                      }}
+                      className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-primary/10 file:text-brand-primary hover:file:bg-brand-primary/20 cursor-pointer"
+                    />
+                    {newCombo.imagen_url && (
+                      <div className="relative mt-2 w-full h-32 rounded-xl overflow-hidden border border-brand-accent/15 bg-paper/50 flex items-center justify-center">
+                        <img src={api.getImageUrl(newCombo.imagen_url)} alt="Vista previa del combo" className="object-contain h-full w-full" />
+                        <button
+                          type="button"
+                          onClick={() => setNewCombo(prev => ({ ...prev, imagen_url: "" }))}
+                          className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full p-1 shadow-md transition-all"
+                          title="Remover imagen"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="flex items-center gap-2 px-1">
                     <input
                       type="checkbox"
@@ -1128,6 +1166,11 @@ export const AdminDashboard = () => {
                       return (
                         <div key={c.id} className="bg-white p-5 rounded-2xl border border-brand-accent/10 shadow-sm flex flex-col justify-between space-y-4">
                           <div className="space-y-3">
+                            {c.imagen_url && (
+                              <div className="w-full h-32 rounded-xl overflow-hidden border border-brand-accent/5 bg-paper/20">
+                                <img src={api.getImageUrl(c.imagen_url)} alt={c.nombre} className="w-full h-full object-cover" />
+                              </div>
+                            )}
                             <div className="flex justify-between items-start gap-4">
                               <h4 className="font-serif font-bold text-base text-brand-primary line-clamp-2">{c.nombre}</h4>
                               

@@ -78,6 +78,21 @@ export const CartDropdown = ({
         receiptUrl = res.url;
       }
 
+      if (window.gtag) {
+        window.gtag("event", "add_payment_info", {
+          currency: "NIO",
+          value: Number(total),
+          coupon: discount?.code || "",
+          payment_type: paymentMethod === "paypal" ? "PayPal" : "Comprobante",
+          items: items.map(item => ({
+            item_id: String(item.id),
+            item_name: item.name,
+            price: Number(item.price),
+            quantity: Number(item.quantity)
+          }))
+        });
+      }
+
       await onCheckout({
         payment_method: paymentMethod,
         payment_receipt_url: receiptUrl,
@@ -322,7 +337,22 @@ export const CartDropdown = ({
                   </div>
                   <button
                     disabled={items.length === 0}
-                    onClick={() => setStep("shipping")}
+                    onClick={() => {
+                      if (window.gtag) {
+                        window.gtag("event", "begin_checkout", {
+                          currency: "NIO",
+                          value: Number(total),
+                          coupon: discount?.code || "",
+                          items: items.map(item => ({
+                            item_id: String(item.id),
+                            item_name: item.name,
+                            price: Number(item.price),
+                            quantity: Number(item.quantity)
+                          }))
+                        });
+                      }
+                      setStep("shipping");
+                    }}
                     className="w-full bg-brand-primary text-white py-4 rounded-xl font-bold tracking-tight hover:bg-brand-accent disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                   >
                     Continuar <ChevronRight size={18} />
@@ -392,6 +422,20 @@ export const CartDropdown = ({
                       if (shippingType === "delivery" && !shippingAddress.trim()) {
                         alert("Por favor ingresa tu dirección exacta.");
                         return;
+                      }
+                      if (window.gtag) {
+                        window.gtag("event", "add_shipping_info", {
+                          currency: "NIO",
+                          value: Number(total),
+                          coupon: discount?.code || "",
+                          shipping_tier: shippingType === "delivery" ? "Delivery" : "Pickup",
+                          items: items.map(item => ({
+                            item_id: String(item.id),
+                            item_name: item.name,
+                            price: Number(item.price),
+                            quantity: Number(item.quantity)
+                          }))
+                        });
                       }
                       setStep("payment");
                     }}

@@ -29,12 +29,12 @@ export function useCart(user) {
     if (window.gtag) {
       window.gtag("event", "add_to_cart", {
         currency: "NIO",
-        value: product.price,
+        value: Number(product.price),
         items: [{
           item_id: String(product.id),
           item_name: product.name,
-          price: product.price,
-          quantity: 1
+          price: Number(product.price),
+          quantity: Number(1)
         }]
       });
     }
@@ -48,12 +48,12 @@ export function useCart(user) {
       if (item && window.gtag) {
         window.gtag("event", "remove_from_cart", {
           currency: "NIO",
-          value: item.price * item.quantity,
+          value: Number(item.price * item.quantity),
           items: [{
             item_id: String(item.id),
             item_name: item.name,
-            price: item.price,
-            quantity: item.quantity
+            price: Number(item.price),
+            quantity: Number(item.quantity)
           }]
         });
       }
@@ -73,23 +73,23 @@ export function useCart(user) {
         if (amount > 0) {
           window.gtag("event", "add_to_cart", {
             currency: "NIO",
-            value: item.price,
+            value: Number(item.price),
             items: [{
               item_id: String(item.id),
               item_name: item.name,
-              price: item.price,
-              quantity: amount
+              price: Number(item.price),
+              quantity: Number(amount)
             }]
           });
         } else if (amount < 0) {
           window.gtag("event", "remove_from_cart", {
             currency: "NIO",
-            value: item.price,
+            value: Number(item.price),
             items: [{
               item_id: String(item.id),
               item_name: item.name,
-              price: item.price,
-              quantity: Math.abs(amount)
+              price: Number(item.price),
+              quantity: Number(Math.abs(amount))
             }]
           });
         }
@@ -285,12 +285,12 @@ export function useCart(user) {
     if (isCartOpen && window.gtag && cart.length > 0) {
       window.gtag("event", "view_cart", {
         currency: "NIO",
-        value: cartTotal,
+        value: Number(cartTotal),
         items: cart.map(item => ({
           item_id: String(item.id),
           item_name: item.name,
-          price: item.price,
-          quantity: item.quantity
+          price: Number(item.price),
+          quantity: Number(item.quantity)
         }))
       });
     }
@@ -300,21 +300,6 @@ export function useCart(user) {
     if (!user) {
       setIsCartOpen(false);
       throw new Error("Debe iniciar sesión para realizar un pedido");
-    }
-
-    // Google Analytics begin_checkout event tracking
-    if (window.gtag) {
-      window.gtag("event", "begin_checkout", {
-        currency: "NIO",
-        value: cartTotal,
-        coupon: discount?.code || "",
-        items: cart.map(item => ({
-          item_id: String(item.id),
-          item_name: item.name,
-          price: item.price,
-          quantity: item.quantity
-        }))
-      });
     }
 
     try {
@@ -329,14 +314,14 @@ export function useCart(user) {
       if (window.gtag) {
         window.gtag("event", "purchase", {
           transaction_id: paymentData.paypal_order_id || "ORDER_" + Math.random().toString(36).substring(2, 11),
-          value: cartTotal,
+          value: Number(cartTotal),
           currency: "NIO",
           coupon: discount?.code || "",
           items: cart.map(item => ({
             item_id: String(item.id),
             item_name: item.name,
-            price: item.price,
-            quantity: item.quantity
+            price: Number(item.price),
+            quantity: Number(item.quantity)
           }))
         });
       }

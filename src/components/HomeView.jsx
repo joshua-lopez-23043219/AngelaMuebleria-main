@@ -378,39 +378,64 @@ export const HomeView = ({ onStartShopping, onAddToCart }) => {
                   transition={{ duration: 0.4 }}
                   className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center"
                 >
-                  {/* Product grid / list */}
-                  <div className="lg:col-span-7 space-y-4">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                      {combos[currentIndex].productos_detalle?.map((prod, pIdx) => (
-                        <motion.div
-                          key={pIdx}
-                          whileHover={{ y: -5 }}
-                          className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-3 flex flex-col items-center text-center space-y-2 relative"
-                        >
-                          <span className="absolute top-2 right-2 bg-brand-accent text-brand-primary text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shadow-md">
-                            {prod.cantidad}x
-                          </span>
-                          <div className="w-20 h-20 rounded-xl overflow-hidden bg-white/10 flex items-center justify-center">
-                            {prod.url_miniatura ? (
-                              <img
-                                src={api.getImageUrl(prod.url_miniatura)}
-                                alt={prod.nombre}
-                                className="w-full h-full object-cover"
-                                referrerPolicy="no-referrer"
-                              />
-                            ) : (
-                              <span className="text-white/40 text-xs">Sin foto</span>
-                            )}
+                  {/* Product grid / list or Custom combo image */}
+                  <div className="lg:col-span-7">
+                    {combos[currentIndex].imagen_url ? (
+                      <div className="relative w-full h-[320px] sm:h-[400px] rounded-3xl overflow-hidden border border-white/10 group shadow-2xl bg-black/40">
+                        <img
+                          src={api.getImageUrl(combos[currentIndex].imagen_url)}
+                          alt={combos[currentIndex].nombre}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          referrerPolicy="no-referrer"
+                        />
+                        {/* Overlay with list of items */}
+                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-4 sm:p-6 flex flex-col justify-end">
+                          <p className="text-[10px] font-bold text-brand-accent uppercase tracking-wider mb-2">Elementos Incluidos:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {combos[currentIndex].productos_detalle?.map((prod, pIdx) => (
+                              <span
+                                key={pIdx}
+                                className="bg-white/10 backdrop-blur-md border border-white/10 text-white px-2.5 py-1 rounded-full text-xs font-medium"
+                              >
+                                {prod.cantidad}x {prod.nombre}
+                              </span>
+                            ))}
                           </div>
-                          <p className="text-white text-xs font-medium line-clamp-2 w-full pt-1">
-                            {prod.nombre}
-                          </p>
-                          <p className="text-brand-accent/80 font-mono text-[10px]">
-                            C$ {prod.precio_base.toLocaleString()} c/u
-                          </p>
-                        </motion.div>
-                      ))}
-                    </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        {combos[currentIndex].productos_detalle?.map((prod, pIdx) => (
+                          <motion.div
+                            key={pIdx}
+                            whileHover={{ y: -5 }}
+                            className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-3 flex flex-col items-center text-center space-y-2 relative"
+                          >
+                            <span className="absolute top-2 right-2 bg-brand-accent text-brand-primary text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shadow-md">
+                              {prod.cantidad}x
+                            </span>
+                            <div className="w-20 h-20 rounded-xl overflow-hidden bg-white/10 flex items-center justify-center">
+                              {prod.url_miniatura ? (
+                                <img
+                                  src={api.getImageUrl(prod.url_miniatura)}
+                                  alt={prod.nombre}
+                                  className="w-full h-full object-cover"
+                                  referrerPolicy="no-referrer"
+                                />
+                              ) : (
+                                <span className="text-white/40 text-xs">Sin foto</span>
+                              )}
+                            </div>
+                            <p className="text-white text-xs font-medium line-clamp-2 w-full pt-1">
+                              {prod.nombre}
+                            </p>
+                            <p className="text-brand-accent/80 font-mono text-[10px]">
+                              C$ {prod.precio_base.toLocaleString()} c/u
+                            </p>
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Offer details & action */}
