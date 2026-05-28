@@ -310,8 +310,23 @@ export function useCart(user) {
         ...paymentData,
       });
 
+      const completeCheckout = () => {
+        setCart([]);
+        setDiscount(null);
+        setIsCartOpen(false);
+        onSuccess();
+      };
+
       // Google Analytics tracking for purchases (e.g. PayPal/receipts)
       if (window.gtag) {
+        let callbackCalled = false;
+        const callbackTimeout = setTimeout(() => {
+          if (!callbackCalled) {
+            callbackCalled = true;
+            completeCheckout();
+          }
+        }, 1000); // 1-second fallback timeout for robustness
+
         window.gtag("event", "purchase", {
           transaction_id: paymentData.paypal_order_id || "ORDER_" + Math.random().toString(36).substring(2, 11),
           value: Number(cartTotal),
@@ -322,14 +337,18 @@ export function useCart(user) {
             item_name: item.name,
             price: Number(item.price),
             quantity: Number(item.quantity)
-          }))
+          })),
+          event_callback: () => {
+            if (!callbackCalled) {
+              callbackCalled = true;
+              clearTimeout(callbackTimeout);
+              completeCheckout();
+            }
+          }
         });
+      } else {
+        completeCheckout();
       }
-
-      setCart([]);
-      setDiscount(null);
-      setIsCartOpen(false);
-      onSuccess();
     } catch (e) {
       throw new Error(e.message);
     }
