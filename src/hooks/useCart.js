@@ -14,22 +14,6 @@ export function useCart(user) {
     }
   }, [user]);
 
-  // Google Analytics view_cart event tracking
-  useEffect(() => {
-    if (isCartOpen && window.gtag && cart.length > 0) {
-      window.gtag("event", "view_cart", {
-        currency: "NIO",
-        value: cartTotal,
-        items: cart.map(item => ({
-          item_id: String(item.id),
-          item_name: item.name,
-          price: item.price,
-          quantity: item.quantity
-        }))
-      });
-    }
-  }, [isCartOpen, cart, cartTotal]);
-
   const addToCart = (product) => {
     setCart((prev) => {
       const existing = prev.find((p) => p.id === product.id);
@@ -295,6 +279,22 @@ export function useCart(user) {
   const discountAmount = discount ? cartRawTotal * (discount.percentage / 100) : 0;
   const cartTotal = Math.max(0, cartRawTotal - discountAmount - comboDiscountTotal);
   const cartCount = cart.reduce((acc, c) => acc + c.quantity, 0);
+
+  // Google Analytics view_cart event tracking
+  useEffect(() => {
+    if (isCartOpen && window.gtag && cart.length > 0) {
+      window.gtag("event", "view_cart", {
+        currency: "NIO",
+        value: cartTotal,
+        items: cart.map(item => ({
+          item_id: String(item.id),
+          item_name: item.name,
+          price: item.price,
+          quantity: item.quantity
+        }))
+      });
+    }
+  }, [isCartOpen, cart, cartTotal]);
 
   const checkout = async (paymentData, onSuccess) => {
     if (!user) {
