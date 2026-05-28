@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { X, Box, ShoppingCart, Sparkles } from "lucide-react";
+import { X, Box, ShoppingCart, Sparkles, CheckCircle, AlertCircle, Info, AlertTriangle } from "lucide-react";
 import { api } from "./services/api";
 
 // Hooks (JS Logic)
@@ -109,10 +109,59 @@ const fireConfetti = () => {
 export default function App() {
   const [currentPage, setCurrentPage] = useState("home");
   const [selected3dProduct, setSelected3dProduct] = useState(null);
+  const [customAlert, setCustomAlert] = useState(null); // { message, title, type }
+
   // Custom Hooks to separate functionality (JS) from layout (HTML)
   const auth = useAuth();
   const prod = useProducts();
   const cart = useCart(auth.user);
+
+  // Set up custom notification listener & override window.alert
+  React.useEffect(() => {
+    const handleCustomAlert = (e) => {
+      const { message, title, type } = e.detail;
+      setCustomAlert({ message, title, type: type || "info" });
+    };
+
+    window.addEventListener("show-custom-alert", handleCustomAlert);
+    
+    // Override window.alert globally!
+    const originalAlert = window.alert;
+    window.alert = (message, title = "Notificación") => {
+      let type = "info";
+      const lowercaseMsg = String(message || "").toLowerCase();
+      if (
+        lowercaseMsg.includes("éxito") || 
+        lowercaseMsg.includes("exitosamente") || 
+        lowercaseMsg.includes("guardado con éxito") || 
+        lowercaseMsg.includes("registrada correctamente") || 
+        lowercaseMsg.includes("enviado exitosamente") ||
+        lowercaseMsg.includes("completado con éxito")
+      ) {
+        type = "success";
+      } else if (
+        lowercaseMsg.includes("error") || 
+        lowercaseMsg.includes("falló") || 
+        lowercaseMsg.includes("incorrecta") || 
+        lowercaseMsg.includes("debe iniciar sesión") || 
+        lowercaseMsg.includes("por favor") ||
+        lowercaseMsg.includes("inválido") ||
+        lowercaseMsg.includes("ingresa")
+      ) {
+        type = "warning";
+      }
+      
+      const event = new CustomEvent("show-custom-alert", {
+        detail: { message, title, type }
+      });
+      window.dispatchEvent(event);
+    };
+
+    return () => {
+      window.removeEventListener("show-custom-alert", handleCustomAlert);
+      window.alert = originalAlert;
+    };
+  }, []);
   
   // Check for reset-password query param on mount
   React.useEffect(() => {
@@ -467,6 +516,66 @@ export default function App() {
           </p>
         </div>
       </footer>
+
+      {/* Custom Alert Modal */}
+      <AnimatePresence>
+        {customAlert && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            {/* Backdrop Blur Overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setCustomAlert(null)}
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm cursor-pointer"
+            />
+            {/* Modal Body Card */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: "spring", duration: 0.4 }}
+              className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden border border-brand-accent/10 flex flex-col items-center p-6 text-center"
+            >
+              {/* Icon Container based on type */}
+              <div className={`p-4 rounded-full mb-4 ${
+                customAlert.type === "success" ? "bg-green-50 text-green-500 animate-pulse" :
+                customAlert.type === "warning" ? "bg-amber-50 text-amber-500" :
+                customAlert.type === "error" ? "bg-red-50 text-red-500" :
+                "bg-blue-50 text-blue-500"
+              }`}>
+                {customAlert.type === "success" && <CheckCircle size={36} />}
+                {customAlert.type === "warning" && <AlertTriangle size={36} />}
+                {customAlert.type === "error" && <AlertCircle size={36} />}
+                {customAlert.type === "info" && <Info size={36} />}
+              </div>
+
+              {/* Title */}
+              <h3 className="text-lg font-bold text-gray-800 font-serif mb-2">
+                {customAlert.title}
+              </h3>
+
+              {/* Message */}
+              <p className="text-sm text-gray-600 mb-6 font-medium leading-relaxed">
+                {customAlert.message}
+              </p>
+
+              {/* Button */}
+              <button
+                onClick={() => setCustomAlert(null)}
+                className={`w-full py-3 rounded-xl font-bold transition-all shadow-md active:scale-95 cursor-pointer ${
+                  customAlert.type === "success" ? "bg-green-500 hover:bg-green-600 text-white shadow-green-100" :
+                  customAlert.type === "warning" ? "bg-amber-500 hover:bg-amber-600 text-white shadow-amber-100" :
+                  customAlert.type === "error" ? "bg-red-500 hover:bg-red-600 text-white shadow-red-100" :
+                  "bg-brand-primary hover:bg-brand-accent text-white shadow-brand-accent/20"
+                }`}
+              >
+                Aceptar
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
