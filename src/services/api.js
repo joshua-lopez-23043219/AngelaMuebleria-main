@@ -148,6 +148,8 @@ export const api = {
     getMyItems: (id) => apiFetch(`/apiPedidos/Pedido/${id}/get_detalles/`),
     cancel: (id) =>
       apiFetch(`/apiPedidos/Pedido/${id}/cancelar/`, { method: "POST" }),
+    requestRefund: (id) =>
+      apiFetch(`/apiPedidos/Pedido/${id}/solicitar_devolucion/`, { method: "POST" }),
     adminGetAll: async () => {
       const res = await apiFetch("/apiPedidos/Pedido/");
       return Array.isArray(res) ? res : (res.results || []);

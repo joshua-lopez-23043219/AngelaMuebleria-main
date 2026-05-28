@@ -437,7 +437,7 @@ export const AdminDashboard = () => {
         <>
           {activeTab === 'dashboard' && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               {[
                 {
                   label: "Ingresos Totales",
@@ -463,21 +463,35 @@ export const AdminDashboard = () => {
                   icon: AlertCircle,
                   color: "text-red-500",
                 },
+                {
+                  label: "Devoluciones",
+                  value: `C$${(Number(admin.stats?.refundedAmount) || 0).toLocaleString()}`,
+                  icon: RefreshCw,
+                  color: "text-orange-600",
+                  subtext: `Sem: C$${(Number(admin.stats?.refundedThisWeek) || 0).toLocaleString()} | Mes: C$${(Number(admin.stats?.refundedThisMonth) || 0).toLocaleString()}`,
+                },
               ].map((stat, i) => (
                 <motion.div
                   key={stat.label}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.1 }}
-                  className="bg-white p-6 rounded-2xl border border-brand-accent/10 shadow-sm"
+                  className="bg-white p-5 rounded-2xl border border-brand-accent/10 shadow-sm flex flex-col justify-between"
                 >
-                  <stat.icon className={cn("mb-2", stat.color)} size={24} />
-                  <p className="text-xs uppercase tracking-widest font-bold text-gray-400">
-                    {stat.label}
-                  </p>
-                  <p className="text-2xl font-serif font-bold mt-1">
-                    {stat.value}
-                  </p>
+                  <div>
+                    <stat.icon className={cn("mb-2", stat.color)} size={22} />
+                    <p className="text-xs uppercase tracking-widest font-bold text-gray-400">
+                      {stat.label}
+                    </p>
+                    <p className="text-xl font-serif font-bold mt-1">
+                      {stat.value}
+                    </p>
+                  </div>
+                  {stat.subtext && (
+                    <p className="text-[9px] text-gray-500 font-bold tracking-tight mt-2 border-t pt-1.5 border-brand-accent/5">
+                      {stat.subtext}
+                    </p>
+                  )}
                 </motion.div>
               ))}
             </div>
@@ -845,6 +859,8 @@ export const AdminDashboard = () => {
                             o.status === "processing"        ? "bg-purple-100 text-purple-700" :
                             o.status === "ready"             ? "bg-indigo-100 text-indigo-700" :
                             o.status === "delivered"         ? "bg-green-100 text-green-700" :
+                            o.status === "refund_pending"    ? "bg-orange-100 text-orange-700 animate-pulse" :
+                            o.status === "refunded"          ? "bg-gray-100 text-gray-700" :
                             "bg-red-100 text-red-700"
                           )}
                         >
@@ -854,6 +870,8 @@ export const AdminDashboard = () => {
                             o.status === "processing"        ? "En Proceso" :
                             o.status === "ready"             ? "Listo para Entrega" :
                             o.status === "delivered"         ? "Finalizado" :
+                            o.status === "refund_pending"    ? "Devolución Sol." :
+                            o.status === "refunded"          ? "Devuelto" :
                             "Cancelado"}
                         </span>
                         <p className="text-[10px] text-gray-400 font-bold uppercase mt-2">
@@ -929,6 +947,20 @@ export const AdminDashboard = () => {
                           className="flex-1 text-[11px] font-bold uppercase tracking-wider py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all shadow-sm"
                         >
                           Finalizar ✓
+                        </button>
+                      )}
+
+                      {/* Step 6: Refund approval */}
+                      {o.status === "refund_pending" && (
+                        <button
+                          onClick={() => {
+                            if (confirm("¿Estás seguro de hacer efectiva esta devolución? Se reintegrará el stock y se reembolsarán los pagos.")) {
+                              handleUpdateStatus(o.id, "refunded");
+                            }
+                          }}
+                          className="flex-1 text-[11px] font-bold uppercase tracking-wider py-2.5 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition-all shadow-sm"
+                        >
+                          Aprobar Devolución ✓
                         </button>
                       )}
                     </div>
@@ -1577,18 +1609,39 @@ export const AdminDashboard = () => {
                   </p>
                 </div>
                 <div className="flex gap-4 pt-2">
-                  {selectedOrder.status === "pending" ? (
+                  {selectedOrder.status === "refund_pending" ? (
                     <button
-                      onClick={() =>
-                        handleUpdateStatus(selectedOrder.id, "delivered")
-                      }
-                      className="flex-1 bg-green-600 text-white font-bold py-4 rounded-2xl hover:bg-green-700 transition-all"
+                      onClick={() => {
+                        if (confirm("¿Estás seguro de hacer efectiva esta devolución? Se reintegrará el stock y se reembolsarán los pagos.")) {
+                          handleUpdateStatus(selectedOrder.id, "refunded");
+                        }
+                      }}
+                      className="flex-1 bg-orange-600 text-white font-bold py-4 rounded-2xl hover:bg-orange-700 transition-all text-xs uppercase tracking-wider"
                     >
-                      Marcar como Finalizado
+                      Aprobar Devolución ✓
                     </button>
+                  ) : selectedOrder.status === "refunded" ? (
+                    <div className="flex-1 text-center py-4 bg-gray-50 text-gray-500 rounded-2xl font-bold border border-gray-200 text-sm">
+                      Devolución Efectuada 💸
+                    </div>
+                  ) : selectedOrder.status === "cancelled" ? (
+                    <div className="flex-1 text-center py-4 bg-red-50 text-red-500 rounded-2xl font-bold border border-red-100 text-sm">
+                      Pedido Cancelado
+                    </div>
+                  ) : selectedOrder.status === "delivered" ? (
+                    <div className="flex-1 text-center py-4 bg-green-50 text-green-600 rounded-2xl font-bold border border-green-100 text-sm">
+                      Pedido Finalizado 🎉
+                    </div>
                   ) : (
-                    <div className="flex-1 text-center py-4 bg-green-50 text-green-600 rounded-2xl font-bold border border-green-100">
-                      Pedido Finalizado
+                    <div className="flex-1 text-center py-4 bg-brand-primary/5 text-brand-primary rounded-2xl font-bold border border-brand-primary/10 text-sm">
+                      Estado: {
+                        selectedOrder.status === "pending" ? "Pendiente" :
+                        selectedOrder.status === "payment_review" ? "En Revisión de Pago" :
+                        selectedOrder.status === "payment_validated" ? "Pago Validado" :
+                        selectedOrder.status === "processing" ? "En Fabricación" :
+                        selectedOrder.status === "ready" ? "Listo para entrega" :
+                        selectedOrder.status
+                      }
                     </div>
                   )}
                 </div>

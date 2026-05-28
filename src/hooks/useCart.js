@@ -14,6 +14,22 @@ export function useCart(user) {
     }
   }, [user]);
 
+  // Google Analytics view_cart event tracking
+  useEffect(() => {
+    if (isCartOpen && window.gtag && cart.length > 0) {
+      window.gtag("event", "view_cart", {
+        currency: "NIO",
+        value: cartTotal,
+        items: cart.map(item => ({
+          item_id: String(item.id),
+          item_name: item.name,
+          price: item.price,
+          quantity: item.quantity
+        }))
+      });
+    }
+  }, [isCartOpen, cart, cartTotal]);
+
   const addToCart = (product) => {
     setCart((prev) => {
       const existing = prev.find((p) => p.id === product.id);
@@ -244,8 +260,9 @@ export function useCart(user) {
             }
           });
 
-          // Sugerir cada producto faltante con la cantidad restante necesaria
-          if (missingItems.length > 0) {
+          const totalMissingUnits = missingItems.reduce((acc, m) => acc + m.needed, 0);
+          // Sugerir cada producto faltante con la cantidad restante necesaria si y solo si falta exactamente 1 mueble
+          if (missingItems.length > 0 && totalMissingUnits === 1) {
             missingItems.forEach(missing => {
               let prodName = "Producto recomendado";
               if (regla.productos_detalle) {
@@ -283,6 +300,21 @@ export function useCart(user) {
     if (!user) {
       setIsCartOpen(false);
       throw new Error("Debe iniciar sesión para realizar un pedido");
+    }
+
+    // Google Analytics begin_checkout event tracking
+    if (window.gtag) {
+      window.gtag("event", "begin_checkout", {
+        currency: "NIO",
+        value: cartTotal,
+        coupon: discount?.code || "",
+        items: cart.map(item => ({
+          item_id: String(item.id),
+          item_name: item.name,
+          price: item.price,
+          quantity: item.quantity
+        }))
+      });
     }
 
     try {

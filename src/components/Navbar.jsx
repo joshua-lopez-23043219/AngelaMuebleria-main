@@ -58,6 +58,13 @@ export const Navbar = ({
             Inicio
           </button>
           
+          <button
+            onClick={() => navigateTo("faq")}
+            className="text-sm font-medium hover:text-brand-accent transition-colors"
+          >
+            FAQ
+          </button>
+          
           {/* Dropdown - Catálogo */}
           <div className="relative group">
             <button
@@ -184,6 +191,13 @@ export const Navbar = ({
             className="text-left py-2 px-4 text-sm font-medium hover:bg-paper rounded-xl transition-colors"
           >
             Inicio
+          </button>
+          
+          <button
+            onClick={() => navigateTo("faq")}
+            className="text-left py-2 px-4 text-sm font-medium hover:bg-paper rounded-xl transition-colors"
+          >
+            Preguntas Frecuentes
           </button>
           
           <div className="border-t border-gray-100 my-1" />

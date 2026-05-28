@@ -18,6 +18,93 @@ import { OrdersList } from "./components/OrdersList";
 import { FurnitureBuilder } from "./components/FurnitureBuilder";
 import { HomeView } from "./components/HomeView";
 import { ResetPasswordPage } from "./components/ResetPasswordPage";
+import { FAQView } from "./components/FAQView";
+
+// Canvas Confetti Celebration Emitter
+const fireConfetti = () => {
+  const canvas = document.createElement("canvas");
+  canvas.style.position = "fixed";
+  canvas.style.top = "0";
+  canvas.style.left = "0";
+  canvas.style.width = "100%";
+  canvas.style.height = "100%";
+  canvas.style.pointerEvents = "none";
+  canvas.style.zIndex = "9999";
+  document.body.appendChild(canvas);
+
+  const ctx = canvas.getContext("2d");
+  let width = (canvas.width = window.innerWidth);
+  let height = (canvas.height = window.innerHeight);
+
+  const handleResize = () => {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+  };
+  window.addEventListener("resize", handleResize);
+
+  const colors = ["#1A4B3C", "#d97706", "#2563eb", "#9333ea", "#16a34a", "#e11d48"];
+  const particles = [];
+
+  for (let i = 0; i < 150; i++) {
+    particles.push({
+      x: Math.random() * width,
+      y: Math.random() * height - height,
+      r: Math.random() * 6 + 4,
+      d: Math.random() * 150,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      tilt: Math.random() * 10 - 5,
+      tiltAngleIncremental: Math.random() * 0.07 + 0.02,
+      tiltAngle: 0,
+      velocity: {
+        x: Math.random() * 3 - 1.5,
+        y: Math.random() * 3 + 2
+      }
+    });
+  }
+
+  let animationFrameId;
+  const draw = () => {
+    ctx.clearRect(0, 0, width, height);
+
+    let active = false;
+    particles.forEach((p) => {
+      p.tiltAngle += p.tiltAngleIncremental;
+      p.y += p.velocity.y;
+      p.x += p.velocity.x;
+      p.tilt = Math.sin(p.tiltAngle) * 12;
+
+      if (p.y <= height) {
+        active = true;
+      }
+
+      ctx.beginPath();
+      ctx.lineWidth = p.r;
+      ctx.strokeStyle = p.color;
+      ctx.moveTo(p.x + p.tilt + p.r / 2, p.y);
+      ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 2);
+      ctx.stroke();
+    });
+
+    if (active) {
+      animationFrameId = requestAnimationFrame(draw);
+    } else {
+      if (canvas.parentNode) {
+        document.body.removeChild(canvas);
+      }
+      window.removeEventListener("resize", handleResize);
+    }
+  };
+
+  draw();
+
+  setTimeout(() => {
+    cancelAnimationFrame(animationFrameId);
+    if (canvas.parentNode) {
+      document.body.removeChild(canvas);
+    }
+    window.removeEventListener("resize", handleResize);
+  }, 6000);
+};
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState("home");
@@ -52,6 +139,7 @@ export default function App() {
     setCurrentPage("orders");
     prod.refreshProducts(); // Update stock in UI
     alert("¡Pedido realizado con éxito!");
+    fireConfetti();
   };
 
   const handleCheckout = async (paymentData) => {
@@ -162,6 +250,10 @@ export default function App() {
         )}
 
         {currentPage === "builder" && <FurnitureBuilder />}
+
+        {currentPage === "faq" && (
+          <FAQView onStartShopping={() => setCurrentPage("catalog")} />
+        )}
 
         {currentPage === "login" && (
           <div className="max-w-md mx-auto">
@@ -362,6 +454,12 @@ export default function App() {
               className="hover:text-brand-accent transition-colors"
             >
               Personalizar
+            </button>
+            <button
+              onClick={() => setCurrentPage("faq")}
+              className="hover:text-brand-accent transition-colors"
+            >
+              FAQ
             </button>
           </div>
           <p className="text-[10px] text-gray-400">

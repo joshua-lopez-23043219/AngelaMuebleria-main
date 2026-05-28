@@ -113,6 +113,8 @@ export const OrdersList = () => {
                   o.status === "processing"        ? "bg-purple-50 text-purple-600" :
                   o.status === "ready"             ? "bg-indigo-50 text-indigo-600" :
                   o.status === "delivered"         ? "bg-green-50 text-green-600" :
+                  o.status === "refund_pending"    ? "bg-orange-100 text-orange-700" :
+                  o.status === "refunded"          ? "bg-gray-100 text-gray-600" :
                   "bg-red-50 text-red-500"
                 )}
               >
@@ -122,6 +124,8 @@ export const OrdersList = () => {
                  o.status === "processing"        ? "🔨 En Fabricación" :
                  o.status === "ready"             ? "📦 Listo para Entrega" :
                  o.status === "delivered"         ? "🎉 Finalizado" :
+                 o.status === "refund_pending"    ? "🕐 Devolución Solicitada" :
+                 o.status === "refunded"          ? "💸 Devolución Efectuada" :
                  "❌ Cancelado"}
               </span>
               <button
@@ -291,20 +295,26 @@ export const OrdersList = () => {
 
                 <div
                   className={cn(
-                    "p-4 rounded-2xl text-center font-bold",
+                    "p-4 rounded-2xl text-center font-bold text-xs",
                     selectedOrder.status === "pending"           ? "bg-yellow-50 text-yellow-600" :
                     selectedOrder.status === "payment_review"    ? "bg-orange-50 text-orange-500" :
                     selectedOrder.status === "payment_validated" ? "bg-blue-50 text-blue-600" :
                     selectedOrder.status === "processing"        ? "bg-purple-50 text-purple-600" :
+                    selectedOrder.status === "ready"             ? "bg-indigo-50 text-indigo-600" :
                     selectedOrder.status === "delivered"         ? "bg-green-50 text-green-600" :
+                    selectedOrder.status === "refund_pending"    ? "bg-orange-100 text-orange-700" :
+                    selectedOrder.status === "refunded"          ? "bg-gray-100 text-gray-600" :
                     "bg-red-50 text-red-500"
                   )}
                 >
                   {selectedOrder.status === "pending"           ? "🕐 Pendiente de Procesar — Tu comprobante está en revisión." :
                    selectedOrder.status === "payment_review"    ? "🔍 El administrador está revisando tu pago." :
                    selectedOrder.status === "payment_validated" ? "✅ ¡Pago Validado! Tu pedido está confirmado." :
-                   selectedOrder.status === "processing"        ? "🔨 Tu mueble está siendo fabricado o listo para recoger." :
+                   selectedOrder.status === "processing"        ? "🔨 Tu mueble está siendo fabricado." :
+                   selectedOrder.status === "ready"             ? "📦 Tu pedido está listo para ser retirado o enviado." :
                    selectedOrder.status === "delivered"         ? "🎉 ¡Pedido Finalizado! Gracias por tu compra." :
+                   selectedOrder.status === "refund_pending"    ? "🕐 Devolución Solicitada — Tu solicitud está en proceso. Deberás esperar un lapso de 3 a 5 días hábiles para el reembolso." :
+                   selectedOrder.status === "refunded"          ? "💸 Devolución Efectuada — Este pedido ha sido devuelto y reembolsado." :
                    "❌ Pedido Cancelado."}
                 </div>
 
@@ -326,6 +336,30 @@ export const OrdersList = () => {
                     className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-2xl text-xs uppercase tracking-wider transition-all mt-4"
                   >
                     Cancelar Pedido
+                  </button>
+                )}
+
+                {/* Solicitar Devolución Action */}
+                {(selectedOrder.status === "payment_validated" || 
+                  selectedOrder.status === "processing" || 
+                  selectedOrder.status === "ready" || 
+                  selectedOrder.status === "delivered") && (
+                  <button
+                    onClick={async () => {
+                      if (confirm("¿Estás seguro de que deseas solicitar la devolución de este pedido? Tu solicitud será evaluada. Deberás esperar un lapso de 3 a 5 días hábiles para que el proceso se haga efectivo y el reembolso se complete.")) {
+                        try {
+                          await api.orders.requestRefund(selectedOrder.id);
+                          alert("Solicitud de devolución registrada correctamente. Espere el procesamiento de 3 a 5 días hábiles.");
+                          setSelectedOrder(null);
+                          ordersApi.refresh();
+                        } catch (e) {
+                          alert("Error al solicitar la devolución: " + e.message);
+                        }
+                      }
+                    }}
+                    className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded-2xl text-xs uppercase tracking-wider transition-all mt-4"
+                  >
+                    Solicitar Devolución
                   </button>
                 )}
               </div>
