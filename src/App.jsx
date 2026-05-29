@@ -123,7 +123,55 @@ export default function App() {
       setCustomAlert({ message, title, type: type || "info" });
     };
 
+    const getLocalImageFallback = (name) => {
+      const norm = String(name || "").toLowerCase();
+      let path = "";
+      
+      if (norm.includes("trevol") || norm.includes("trébol")) {
+        if (norm.includes("sofa") || norm.includes("sofá")) {
+          path = "/imagenes/sofas de 3 trebol.png";
+        } else if (norm.includes("blanca") || norm.includes("blanco")) {
+          path = "/imagenes/silla trebol, blanca.png";
+        } else if (norm.includes("fija") || norm.includes("fijas")) {
+          path = "/imagenes/sillas trebol, naturales encolochadas.png";
+        } else {
+          path = "/imagenes/sillas trebol, naturales encolochadas.png";
+        }
+      } else if (norm.includes("comedor")) {
+        path = "/imagenes/sillas para comedor.png";
+      } else if (norm.includes("cinco pico")) {
+        if (norm.includes("mecedora")) {
+          path = "/imagenes/silla cinco pico mecedora.png";
+        } else {
+          path = "/imagenes/silla cinco pico.png";
+        }
+      } else if (norm.includes("especial")) {
+        path = "/imagenes/sillas especial, natural.png";
+      } else if (norm.includes("granadina")) {
+        path = "/imagenes/sillas granadinas solas.png";
+      } else if (norm.includes("bulungo")) {
+        path = "/imagenes/sofas de 2.png";
+      } else if (norm.includes("sofa") || norm.includes("sofá")) {
+        path = "/imagenes/sofas de 3.png";
+      } else {
+        path = `https://picsum.photos/seed/${encodeURIComponent(name)}/500/500`;
+      }
+      
+      return path;
+    };
+
+    const handleImageError = (e) => {
+      if (e.target && e.target.tagName === "IMG") {
+        if (e.target.dataset.fallbackTriggered) return;
+        e.target.dataset.fallbackTriggered = "true";
+        
+        const name = e.target.alt || "";
+        e.target.src = getLocalImageFallback(name);
+      }
+    };
+
     window.addEventListener("show-custom-alert", handleCustomAlert);
+    window.addEventListener("error", handleImageError, true);
     
     // Override window.alert globally!
     const originalAlert = window.alert;
@@ -159,6 +207,7 @@ export default function App() {
 
     return () => {
       window.removeEventListener("show-custom-alert", handleCustomAlert);
+      window.removeEventListener("error", handleImageError, true);
       window.alert = originalAlert;
     };
   }, []);
