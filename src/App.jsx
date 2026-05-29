@@ -125,39 +125,60 @@ export default function App() {
 
     const getLocalImageFallback = (name) => {
       const norm = String(name || "").toLowerCase();
-      let path = "";
       
+      // 1. Specific matches
       if (norm.includes("trevol") || norm.includes("trébol")) {
         if (norm.includes("sofa") || norm.includes("sofá")) {
-          path = "/imagenes/sofas de 3 trebol.png";
-        } else if (norm.includes("blanca") || norm.includes("blanco")) {
-          path = "/imagenes/silla trebol, blanca.png";
-        } else if (norm.includes("fija") || norm.includes("fijas")) {
-          path = "/imagenes/sillas trebol, naturales encolochadas.png";
-        } else {
-          path = "/imagenes/sillas trebol, naturales encolochadas.png";
+          return "/imagenes/sofas de 3 trebol.png";
         }
-      } else if (norm.includes("comedor")) {
-        path = "/imagenes/sillas para comedor.png";
-      } else if (norm.includes("cinco pico")) {
-        if (norm.includes("mecedora")) {
-          path = "/imagenes/silla cinco pico mecedora.png";
-        } else {
-          path = "/imagenes/silla cinco pico.png";
+        if (norm.includes("blanca") || norm.includes("blanco")) {
+          return "/imagenes/silla trebol, blanca.png";
         }
-      } else if (norm.includes("especial")) {
-        path = "/imagenes/sillas especial, natural.png";
-      } else if (norm.includes("granadina")) {
-        path = "/imagenes/sillas granadinas solas.png";
-      } else if (norm.includes("bulungo")) {
-        path = "/imagenes/sofas de 2.png";
-      } else if (norm.includes("sofa") || norm.includes("sofá")) {
-        path = "/imagenes/sofas de 3.png";
-      } else {
-        path = `https://picsum.photos/seed/${encodeURIComponent(name)}/500/500`;
+        return "/imagenes/sillas trebol, naturales encolochadas.png";
       }
       
-      return path;
+      if (norm.includes("comedor")) {
+        return "/imagenes/sillas para comedor.png";
+      }
+      
+      if (norm.includes("cinco pico")) {
+        if (norm.includes("mecedora")) {
+          return "/imagenes/silla cinco pico mecedora.png";
+        }
+        return "/imagenes/silla cinco pico.png";
+      }
+      
+      if (norm.includes("especial")) {
+        return "/imagenes/sillas especial, natural.png";
+      }
+      
+      if (norm.includes("granadina")) {
+        return "/imagenes/sillas granadinas solas.png";
+      }
+      
+      if (norm.includes("bulungo")) {
+        return "/imagenes/sofas de 2.png";
+      }
+
+      // 2. Generic category fallback based on product keywords (using high quality local images)
+      if (norm.includes("mecedora") || norm.includes("columpio")) {
+        return "/imagenes/sillas trebol natural, encolochadas, mecedoras.png";
+      }
+      
+      if (norm.includes("silla") || norm.includes("sillón") || norm.includes("sillon")) {
+        return "/imagenes/sillas especial, natural.png";
+      }
+
+      if (norm.includes("sofa") || norm.includes("sofá")) {
+        return "/imagenes/sofas de 3.png";
+      }
+
+      if (norm.includes("mesa")) {
+        return "/imagenes/sillas para comedor.png"; // Dining set with table
+      }
+      
+      // 3. Absolute default if no keyword matches (using a beautiful Unsplash furniture studio shot instead of picsum)
+      return "https://images.unsplash.com/photo-1592078615290-033ee584e267?auto=format&fit=crop&q=80&w=800";
     };
 
     const handleImageError = (e) => {
