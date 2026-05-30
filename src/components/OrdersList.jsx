@@ -10,6 +10,100 @@ function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
+const CartItemPreview = ({ item, className }) => {
+  const modelRef = React.useRef(null);
+  const isGlb = item.image_url?.endsWith(".glb");
+
+  const applyColors = () => {
+    const modelViewer = modelRef.current;
+    if (!modelViewer || !modelViewer.model) return;
+
+    const hexToRgb = (hex) => {
+      if (!hex) return null;
+      const sh = hex.replace('#', '');
+      if (sh.length !== 6) return null;
+      const r = parseInt(sh.substring(0, 2), 16) / 255;
+      const g = parseInt(sh.substring(2, 4), 16) / 255;
+      const b = parseInt(sh.substring(4, 6), 16) / 255;
+      return [r, g, b, 1.0];
+    };
+
+    const woodColor = hexToRgb(item.wood_hex);
+    const fabricColor = hexToRgb(item.fabric_hex);
+
+    const mats = modelViewer.model.materials;
+    if (mats.length === 0) return;
+
+    let matchedAny = false;
+    mats.forEach(mat => {
+      const name = mat.name.toLowerCase();
+      const isFabricMat = name.includes('fabric') || name.includes('tela') || name.includes('cushion') || name.includes('cojin') || name.includes('seat') || name.includes('asiento') || name.includes('respaldo') || name.includes('cuero') || name.includes('leather');
+      const isContrastMat = name.includes('news') || name.includes('paper') || name.includes('print') || name.includes('centro') || name.includes('backrest') || name.includes('decor') || name.includes('pattern') || name.includes('decal') || name.includes('picture') || name.includes('image') || name.includes('text') || name.includes('texture') || name.includes('contraste') || name.includes('interior') || name.includes('medallion') || name.includes('central');
+
+      if (!isFabricMat && !isContrastMat && woodColor) {
+        mat.pbrMetallicRoughness.setBaseColorFactor(woodColor);
+        matchedAny = true;
+      }
+    });
+
+    if (!matchedAny && woodColor) {
+      mats.forEach(mat => {
+        const name = mat.name.toLowerCase();
+        const isFabricMat = name.includes('fabric') || name.includes('tela') || name.includes('cushion') || name.includes('cojin') || name.includes('seat') || name.includes('asiento') || name.includes('respaldo') || name.includes('cuero') || name.includes('leather');
+        const isContrastMat = name.includes('news') || name.includes('paper') || name.includes('print') || name.includes('centro') || name.includes('backrest') || name.includes('decor') || name.includes('pattern') || name.includes('decal') || name.includes('picture') || name.includes('image') || name.includes('text') || name.includes('texture') || name.includes('contraste') || name.includes('interior') || name.includes('medallion') || name.includes('central');
+        if (!isFabricMat && !isContrastMat) {
+          mat.pbrMetallicRoughness.setBaseColorFactor(woodColor);
+        }
+      });
+    }
+  };
+
+  React.useEffect(() => {
+    const modelViewer = modelRef.current;
+    if (!modelViewer) return;
+
+    const handleLoad = () => {
+      applyColors();
+    };
+    modelViewer.addEventListener('load', handleLoad);
+    if (modelViewer.model) {
+      applyColors();
+    }
+    return () => {
+      modelViewer.removeEventListener('load', handleLoad);
+    };
+  }, [item.wood_hex, item.fabric_hex, item.image_url]);
+
+  if (isGlb) {
+    return (
+      <div className={`${className} bg-paper rounded-lg overflow-hidden relative border border-brand-accent/5 shrink-0`}>
+        <model-viewer
+          ref={modelRef}
+          src={api.getImageUrl(item.image_url)}
+          alt={item.name}
+          style={{ width: "100%", height: "100%", outline: "none" }}
+          camera-orbit="45deg 75deg 105%"
+          field-of-view="auto"
+          shadow-intensity="0.5"
+          interaction-prompt="none"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={
+        api.getImageUrl(item.image_url) ||
+        `https://picsum.photos/seed/${item.name}/150/150`
+      }
+      alt={item.name}
+      className={className}
+      referrerPolicy="no-referrer"
+    />
+  );
+};
+
 export const OrdersList = () => {
   const ordersApi = useOrders();
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -183,12 +277,7 @@ export const OrdersList = () => {
                   ) : (
                     items.map((item) => (
                       <div key={item.id} className="flex gap-4 items-center">
-                        <img
-                          src={api.getImageUrl(item.image_url)}
-                          alt={item.name}
-                          className="w-14 h-14 rounded-xl object-cover bg-gray-100"
-                          referrerPolicy="no-referrer"
-                        />
+                        <CartItemPreview item={item} className="w-14 h-14 rounded-xl object-cover bg-gray-100" />
                         <div className="flex-1 text-left">
                           <p className="font-bold text-sm leading-tight">
                             {item.name}

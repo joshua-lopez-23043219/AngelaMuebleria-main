@@ -83,7 +83,9 @@ export const FurnitureBuilder = ({ onAddToCart }) => {
       dimensions: selectedFurniture.dimensions || 'Medidas estándar',
       image_url: selectedFurniture.image_url || selectedFurniture.image,
       stock: 99,
-      category: "Personalizado"
+      category: "Personalizado",
+      wood_hex: activeWood?.hex_code || null,
+      fabric_hex: activeFabric?.hex_code || null
     };
 
     if (onAddToCart) {
