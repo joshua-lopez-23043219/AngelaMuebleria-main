@@ -189,11 +189,16 @@ export const OrdersList = () => {
                           className="w-14 h-14 rounded-xl object-cover bg-gray-100"
                           referrerPolicy="no-referrer"
                         />
-                        <div className="flex-1">
+                        <div className="flex-1 text-left">
                           <p className="font-bold text-sm leading-tight">
                             {item.name}
                           </p>
-                          <p className="text-xs text-gray-500 font-mono">
+                          {item.description && (
+                            <p className="text-[10px] text-gray-500 leading-tight mt-1">
+                              {item.description}
+                            </p>
+                          )}
+                          <p className="text-xs text-gray-500 font-mono mt-0.5">
                             {item.quantity} x C${item.price.toLocaleString()}
                           </p>
                         </div>

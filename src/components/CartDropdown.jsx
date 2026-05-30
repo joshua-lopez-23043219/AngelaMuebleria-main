@@ -180,6 +180,11 @@ export const CartDropdown = ({
 
                         <div className="flex-1 flex flex-col justify-between">
                           <h4 className="font-medium text-sm text-gray-800 line-clamp-1">{item.name}</h4>
+                          {item.description && (
+                            <p className="text-[10px] text-gray-500 leading-tight mt-0.5 text-left">
+                              {item.description}
+                            </p>
+                          )}
                           <div className="flex items-center justify-between mt-1">
                             <span className="text-xs text-brand-accent font-bold">
                               C${item.price.toLocaleString()}

@@ -1630,11 +1630,16 @@ export const AdminDashboard = () => {
                           className="w-12 h-12 rounded-lg object-cover"
                           referrerPolicy="no-referrer"
                         />
-                        <div className="flex-1">
+                        <div className="flex-1 text-left">
                           <p className="text-sm font-bold leading-tight">
                             {item.name}
                           </p>
-                          <p className="text-[10px] text-gray-500">
+                          {item.description && (
+                            <p className="text-[10px] text-gray-500 leading-tight mt-1">
+                              {item.description}
+                            </p>
+                          )}
+                          <p className="text-[10px] text-brand-accent font-semibold mt-0.5">
                             {item.quantity} x ${item.price.toLocaleString()}
                           </p>
                         </div>
