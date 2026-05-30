@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { X, ShoppingCart, Trash2, ChevronRight, Upload, CreditCard, Tag, CheckCircle } from "lucide-react";
+import { X, ShoppingCart, Trash2, ChevronRight, Upload, CreditCard, Tag, CheckCircle, Copy, Check, Info } from "lucide-react";
 import { api } from "../services/api";
 
 export const CartDropdown = ({
@@ -29,6 +29,15 @@ export const CartDropdown = ({
   const [isUploading, setIsUploading] = useState(false);
   const [couponInput, setCouponInput] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
+  const [copiedAccount, setCopiedAccount] = useState(""); // "" | "lafise" | "banpro"
+
+  const handleCopyText = (text, key) => {
+    navigator.clipboard.writeText(text);
+    setCopiedAccount(key);
+    setTimeout(() => {
+      setCopiedAccount("");
+    }, 2000);
+  };
 
   const handleClose = () => {
     setStep("cart");
@@ -457,6 +466,19 @@ export const CartDropdown = ({
               <>
                 {/* Payment Step */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                  {/* Tarjeta de Políticas */}
+                  <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-4 text-xs text-amber-900 space-y-2 text-left shadow-sm">
+                    <h4 className="font-bold flex items-center gap-1.5 text-amber-800 text-sm">
+                      <Info size={16} /> Políticas de Pago y Cancelación
+                    </h4>
+                    <p className="leading-relaxed font-medium">
+                      • <strong>Anticipo del 50%:</strong> Se requiere el pago del 50% hoy para iniciar la fabricación de tus muebles. El 50% restante se cancela contra entrega.
+                    </p>
+                    <p className="leading-relaxed font-medium">
+                      • <strong>Penalización por Cancelación:</strong> Si decides cancelar el pedido después de los 5 días de producción, se aplicará una penalización y solo se reembolsará el <strong>25% del total depositado</strong>.
+                    </p>
+                  </div>
+
                   <div className="space-y-4">
                     <label className="flex items-center gap-3 p-4 border rounded-xl cursor-pointer hover:bg-paper transition-colors">
                       <input
@@ -474,9 +496,56 @@ export const CartDropdown = ({
                     </label>
 
                     {paymentMethod === "receipt" && (
-                      <div className="pl-12 space-y-2 animate-in slide-in-from-top-2">
+                      <div className="pl-12 space-y-4 animate-in slide-in-from-top-2">
+                        {/* Cuentas Bancarias */}
+                        <div className="space-y-2.5">
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-left">
+                            Cuentas para transferencia:
+                          </p>
+                          
+                          {/* Cuenta LAFISE */}
+                          <div className="flex items-center justify-between p-3 bg-gray-50 border border-gray-150 rounded-xl">
+                            <div className="text-left">
+                              <p className="text-[10px] font-bold text-gray-500 uppercase">LAFISE Bancentro</p>
+                              <p className="text-xs font-mono font-bold text-gray-800">123456789</p>
+                              <p className="text-[9px] text-gray-400 font-medium">Córdobas (C$)</p>
+                            </div>
+                            <button
+                              onClick={() => handleCopyText("123456789", "lafise")}
+                              className="p-2 hover:bg-gray-200/50 rounded-lg text-gray-500 hover:text-brand-primary transition-all flex items-center justify-center cursor-pointer"
+                              title="Copiar número de cuenta"
+                            >
+                              {copiedAccount === "lafise" ? (
+                                <Check size={16} className="text-green-600 animate-in zoom-in-50" />
+                              ) : (
+                                <Copy size={16} />
+                              )}
+                            </button>
+                          </div>
+
+                          {/* Cuenta BANPRO */}
+                          <div className="flex items-center justify-between p-3 bg-gray-50 border border-gray-150 rounded-xl">
+                            <div className="text-left">
+                              <p className="text-[10px] font-bold text-gray-500 uppercase">BANPRO Grupo Promerica</p>
+                              <p className="text-xs font-mono font-bold text-gray-800">987654321</p>
+                              <p className="text-[9px] text-gray-400 font-medium">Córdobas (C$)</p>
+                            </div>
+                            <button
+                              onClick={() => handleCopyText("987654321", "banpro")}
+                              className="p-2 hover:bg-gray-200/50 rounded-lg text-gray-500 hover:text-brand-primary transition-all flex items-center justify-center cursor-pointer"
+                              title="Copiar número de cuenta"
+                            >
+                              {copiedAccount === "banpro" ? (
+                                <Check size={16} className="text-green-600 animate-in zoom-in-50" />
+                              ) : (
+                                <Copy size={16} />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+
                         <p className="text-xs text-gray-500">
-                          Realiza tu transferencia o depósito y sube la foto del recibo.
+                          Sube la foto del comprobante de transferencia/depósito para confirmar tu anticipo.
                         </p>
                         <input
                           type="file"
@@ -488,7 +557,7 @@ export const CartDropdown = ({
                           <img
                             src={receiptPreview}
                             alt="Comprobante"
-                            className="mt-4 w-full h-32 object-cover rounded-lg border"
+                            className="mt-4 w-full h-32 object-cover rounded-lg border animate-in fade-in"
                           />
                         )}
                       </div>
@@ -523,18 +592,32 @@ export const CartDropdown = ({
                 </div>
 
                 <div className="p-6 border-t bg-paper/50 space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-500">Total a Pagar</span>
-                    <span className="text-2xl font-serif font-bold text-brand-primary">
-                      C${total.toLocaleString()}
-                    </span>
+                  <div className="space-y-2 text-sm border-b border-brand-accent/5 pb-3">
+                    <div className="flex justify-between font-medium text-gray-500">
+                      <span>Total del pedido</span>
+                      <span>C${total.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between font-bold text-brand-primary">
+                      <span>Anticipo a pagar hoy (50%)</span>
+                      <span>C${(total * 0.5).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-400 font-medium">
+                      <span>Restante contra entrega (50%)</span>
+                      <span>C${(total * 0.5).toLocaleString()}</span>
+                    </div>
                   </div>
                   <button
                     onClick={handleFinalCheckout}
                     disabled={isUploading}
                     className="w-full bg-brand-accent text-white py-4 rounded-xl font-bold tracking-tight hover:bg-yellow-600 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    {isUploading ? "Procesando..." : paymentMethod === "paypal" ? "Pagar con PayPal" : "Enviar Pedido"}
+                    {isUploading ? (
+                      "Procesando..."
+                    ) : paymentMethod === "paypal" ? (
+                      `Pagar Anticipo (C$${(total * 0.5).toLocaleString()}) con PayPal`
+                    ) : (
+                      `Enviar Comprobante de Anticipo (C$${(total * 0.5).toLocaleString()})`
+                    )}
                   </button>
                   <button
                     onClick={() => setStep("shipping")}

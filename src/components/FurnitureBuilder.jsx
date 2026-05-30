@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { api } from "../services/api";
 
-export const FurnitureBuilder = () => {
+export const FurnitureBuilder = ({ onAddToCart }) => {
   const [selectedFurniture, setSelectedFurniture] = useState(null);
   const [material, setMaterial] = useState(null);
   const [fabric, setFabric] = useState(null);
@@ -62,25 +62,36 @@ export const FurnitureBuilder = () => {
     loadSavedDesigns();
   };
 
-  const handleQuote = () => {
+  const handleAddToCart = () => {
     const activeWood = materials.find(m => m.id === material);
     const is3d = selectedFurniture?.image_url?.endsWith('.glb');
     const activeFabric = is3d ? null : fabrics.find(f => f.id === fabric);
     
     const price = Number(selectedFurniture?.base_price || 0) + Number(activeWood?.price_modifier || 0) + (is3d ? 0 : Number(activeFabric?.price_modifier || 0));
 
-    let text = `Hola, me gustaría cotizar el siguiente diseño personalizado:\n\n`;
-    text += `*Mueble:* ${selectedFurniture.name}\n`;
-    text += `*Acabado/Pintura:* ${activeWood ? activeWood.name : 'Color original'}\n`;
+    let desc = `Acabado: ${activeWood ? activeWood.name : 'Color original'}`;
     if (!is3d) {
-      text += `*Tapizado:* ${activeFabric ? activeFabric.name : 'Material original'}\n`;
+      desc += `, Tapizado: ${activeFabric ? activeFabric.name : 'Material original'}`;
     }
-    text += `*Dimensiones:* ${selectedFurniture.dimensions || 'Medidas estándar'}\n`;
-    text += `*Precio Estimado:* C$${price.toLocaleString()}\n\n`;
-    text += `¿Me podrían dar más detalles para realizar el pedido?`;
+    desc += `, Medidas: ${selectedFurniture.dimensions || 'Estándar'}`;
 
-    const encodedText = encodeURIComponent(text);
-    window.open(`https://wa.me/50588888888?text=${encodedText}`, '_blank');
+    const customizedProduct = {
+      id: `${selectedFurniture.id}_custom_${Date.now()}`,
+      name: `${selectedFurniture.name} (Personalizado)`,
+      price: price,
+      description: desc,
+      dimensions: selectedFurniture.dimensions || 'Medidas estándar',
+      image_url: selectedFurniture.image_url || selectedFurniture.image,
+      stock: 99,
+      category: "Personalizado"
+    };
+
+    if (onAddToCart) {
+      onAddToCart(customizedProduct);
+      alert(`¡${selectedFurniture.name} (Personalizado) se ha añadido al carrito con éxito!`);
+    } else {
+      alert("Error: No se pudo añadir al carrito.");
+    }
   };
 
   const applyColors = () => {
@@ -530,10 +541,10 @@ export const FurnitureBuilder = () => {
               </p>
             </div>
             <button 
-              onClick={handleQuote}
+              onClick={handleAddToCart}
               className="w-full py-4 bg-brand-primary text-white rounded-2xl font-bold hover:bg-brand-accent transition-all"
             >
-              Cotizar Diseño
+              Añadir al Carrito
             </button>
           </div>
         </div>
