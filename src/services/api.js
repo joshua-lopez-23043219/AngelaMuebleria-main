@@ -150,6 +150,11 @@ export const api = {
       apiFetch(`/apiPedidos/Pedido/${id}/cancelar/`, { method: "POST" }),
     requestRefund: (id) =>
       apiFetch(`/apiPedidos/Pedido/${id}/solicitar_devolucion/`, { method: "POST" }),
+    payShipping: (id, data) =>
+      apiFetch(`/apiPedidos/Pedido/${id}/pay_shipping/`, {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
     adminGetAll: async () => {
       const res = await apiFetch("/apiPedidos/Pedido/");
       return Array.isArray(res) ? res : (res.results || []);
