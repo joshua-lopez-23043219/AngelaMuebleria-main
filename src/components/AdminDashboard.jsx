@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { api } from "../services/api"; // Corrected import
 import { useAdmin } from "../hooks/useAdmin"; // Use the new hook
+import { AnalyticsTab } from "./AnalyticsTab";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -137,7 +138,7 @@ export const AdminDashboard = () => {
   const [customColors, setCustomColors] = useState([]);
   const [shippingCosts, setShippingCosts] = useState({});
 
-  const [activeTab, setActiveTab] = useState("dashboard"); // "dashboard" | "pedidos" | "combos" | "email"
+  const [activeTab, setActiveTab] = useState("dashboard"); // "dashboard" | "pedidos" | "combos" | "email" | "analytics"
   const [emailForm, setEmailForm] = useState({
     subject: "",
     title: "",
@@ -487,6 +488,12 @@ export const AdminDashboard = () => {
               className={`pb-2 font-bold transition-all ${activeTab === 'email' ? 'text-brand-accent border-b-2 border-brand-accent' : 'text-gray-400 hover:text-gray-600'}`}
             >
               Correo Masivo
+            </button>
+            <button
+              onClick={() => setActiveTab('analytics')}
+              className={`pb-2 font-bold transition-all ${activeTab === 'analytics' ? 'text-brand-accent border-b-2 border-brand-accent' : 'text-gray-400 hover:text-gray-600'}`}
+            >
+              Análisis y Gráficas 📊
             </button>
           </div>
           {admin.lastUpdated && activeTab === 'dashboard' && (
@@ -1406,6 +1413,14 @@ export const AdminDashboard = () => {
               </form>
             </div>
           </section>
+        )}
+
+        {activeTab === 'analytics' && (
+          <AnalyticsTab 
+            orders={admin.orders} 
+            products={admin.products} 
+            stats={admin.stats} 
+          />
         )}
       </>
     )}
