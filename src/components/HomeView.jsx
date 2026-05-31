@@ -100,10 +100,9 @@ export const HomeView = ({ onStartShopping, onAddToCart }) => {
       <section className="relative min-h-[90vh] md:min-h-[95vh] flex items-center justify-center overflow-x-hidden pt-24 pb-32 md:pt-32 md:pb-40">
         <div className="absolute inset-0">
           <img
-            src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&q=80&w=2000"
-            alt="Interior Lujoso"
-            className="w-full h-full object-cover grayscale-[20%] brightness-[0.7]"
-            referrerPolicy="no-referrer"
+            src="/imagenes/hero-banner.jpg"
+            alt="Muebles de Mimbre Angela Mueblería"
+            className="w-full h-full object-cover grayscale-[10%] brightness-[0.65]"
           />
 
           <div className="absolute inset-0 bg-gradient-to-t from-brand-primary/80 to-transparent" />
