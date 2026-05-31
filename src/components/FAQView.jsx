@@ -50,8 +50,12 @@ const FAQ_DATA = [
     category: "Garantías y Devoluciones",
     questions: [
       {
-        q: "¿Cuál es la política de devoluciones?",
-        a: "En Mueblería Angela nos enfocamos en que adores tu mobiliario. Si necesitas solicitar una devolución, puedes hacer efectiva la solicitud directamente ingresando a tu panel de 'Mis Pedidos' y presionando el botón 'Solicitar Devolución'. Al registrar la solicitud de devolución, se inicia un proceso de revisión y el reembolso se completará en un lapso estimado de 3 a 5 días hábiles."
+        q: "¿Cuál es la política de cancelación y reembolsos por penalización?",
+        a: "Nuestros pedidos requieren un anticipo del 50% para iniciar la fabricación y el 50% restante contra entrega. En caso de cancelación de un pedido en producción: si se realiza dentro de los primeros 5 días de fabricación, se devuelve el total depositado. Si la cancelación ocurre después de los 5 días, se aplica una penalización por materiales y trabajo iniciado, devolviéndose únicamente el 25% del total depositado."
+      },
+      {
+        q: "¿Cuál es la política de devoluciones una vez recibido el mueble?",
+        a: "En Mueblería Angela nos enfocamos en que adores tu mobiliario. Si necesitas solicitar una devolución tras la entrega, puedes hacer efectiva la solicitud directamente ingresando a tu panel de 'Mis Pedidos' y presionando el botón 'Solicitar Devolución'. Al registrar la solicitud de devolución, se inicia un proceso de revisión y el reembolso se completará en un lapso estimado de 3 a 5 días hábiles."
       },
       {
         q: "¿Qué pasa con el stock y el dinero de un pedido devuelto?",
