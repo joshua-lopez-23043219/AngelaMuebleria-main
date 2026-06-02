@@ -234,12 +234,28 @@ export default function App() {
     };
   }, []);
   
-  // Check for reset-password query param on mount
+  // Check for reset-password or activation query params on mount
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const action = params.get("action");
+    const activated = params.get("activated");
+
     if (action === "reset-password") {
       setCurrentPage("reset-password");
+    }
+
+    if (activated === "true") {
+      // Clear query params from the URL bar so they don't reappear on reload
+      window.history.replaceState({}, document.title, window.location.pathname);
+      setTimeout(() => {
+        alert("¡Tu cuenta ha sido activada con éxito! Ya puedes iniciar sesión con tus credenciales.", "Cuenta Activada");
+        setCurrentPage("login");
+      }, 500);
+    } else if (activated === "false") {
+      window.history.replaceState({}, document.title, window.location.pathname);
+      setTimeout(() => {
+        alert("El enlace de activación es inválido, ha expirado o ya fue utilizado. Si consideras que esto es un error, por favor ponte en contacto con nuestro administrador.", "Error de Activación");
+      }, 500);
     }
   }, []);
 

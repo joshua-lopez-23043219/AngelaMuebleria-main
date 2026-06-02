@@ -207,6 +207,24 @@ export const api = {
       }),
   },
 
+  users: {
+    getAll: () => apiFetch("/apiUsuarios/Usuario/"),
+    update: (id, data) =>
+      apiFetch(`/apiUsuarios/Usuario/${id}/`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      }),
+    ban: (id, isActive) =>
+      apiFetch(`/apiUsuarios/Usuario/${id}/ban_user/`, {
+        method: "POST",
+        body: JSON.stringify({ is_active: isActive }),
+      }),
+    activateManual: (id) =>
+      apiFetch(`/apiUsuarios/Usuario/${id}/activar_manual/`, {
+        method: "POST",
+      }),
+  },
+
   upload: async (file, type) => {
     const formData = new FormData();
     formData.append("file", file);

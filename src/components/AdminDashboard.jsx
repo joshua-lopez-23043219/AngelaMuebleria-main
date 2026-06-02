@@ -11,6 +11,16 @@ import {
   X,
   RefreshCw,
   Box,
+  Users,
+  ShieldAlert,
+  CheckCircle,
+  Ban,
+  Search,
+  MapPin,
+  Phone,
+  Mail,
+  Check,
+  Lock,
 } from "lucide-react";
 import { api } from "../services/api"; // Corrected import
 import { useAdmin } from "../hooks/useAdmin"; // Use the new hook
@@ -138,13 +148,119 @@ export const AdminDashboard = () => {
   const [customColors, setCustomColors] = useState([]);
   const [shippingCosts, setShippingCosts] = useState({});
 
-  const [activeTab, setActiveTab] = useState("dashboard"); // "dashboard" | "pedidos" | "combos" | "email" | "analytics"
+  const [activeTab, setActiveTab] = useState("dashboard"); // "dashboard" | "pedidos" | "combos" | "email" | "analytics" | "usuarios"
   const [emailForm, setEmailForm] = useState({
     subject: "",
     title: "",
     message: "",
   });
   const [sendingEmail, setSendingEmail] = useState(false);
+
+  // Estados de Gestión de Usuarios
+  const [usersList, setUsersList] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [userSearchTerm, setUserSearchTerm] = useState("");
+  const [editingUser, setEditingUser] = useState(null);
+  const [showUserForm, setShowUserForm] = useState(false);
+  const [departments, setDepartments] = useState([]);
+  const [municipalities, setMunicipalities] = useState([]);
+
+  const loadUsersData = async () => {
+    setLoadingUsers(true);
+    try {
+      const dataUsers = await api.users.getAll();
+      setUsersList(dataUsers);
+      
+      // Cargar ubicaciones si no se han cargado aún
+      if (departments.length === 0) {
+        const deps = await api.locations.getDepartments();
+        const muns = await api.locations.getMunicipalities();
+        setDepartments(deps);
+        setMunicipalities(muns);
+      }
+    } catch (e) {
+      console.error("Error al cargar usuarios:", e);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "usuarios") {
+      loadUsersData();
+    }
+  }, [activeTab]);
+
+  const handleToggleBanUser = async (user) => {
+    const actionText = user.is_active ? "vetar (desactivar)" : "activar (quitar veto)";
+    if (!confirm(`¿Estás seguro de que deseas ${actionText} al usuario ${user.first_name || user.username}?`)) {
+      return;
+    }
+    try {
+      const updatedUser = await api.users.ban(user.id, !user.is_active);
+      setUsersList(prev => prev.map(u => u.id === user.id ? updatedUser : u));
+      alert(`Usuario ${user.is_active ? "vetado" : "activado"} exitosamente.`);
+    } catch (e) {
+      alert("Error al cambiar estado del usuario: " + e.message);
+    }
+  };
+
+  const handleActivateUserManual = async (user) => {
+    if (!confirm(`¿Estás seguro de activar manualmente la cuenta del usuario ${user.first_name || user.username}? Esto verificará su correo y activará su cuenta.`)) {
+      return;
+    }
+    try {
+      const updatedUser = await api.users.activateManual(user.id);
+      setUsersList(prev => prev.map(u => u.id === user.id ? updatedUser : u));
+      alert("Cuenta activada manualmente con éxito.");
+    } catch (e) {
+      alert("Error al activar cuenta manualmente: " + e.message);
+    }
+  };
+
+  const handleUserEditSubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = {
+      first_name: formData.get("first_name"),
+      numero_telefono: formData.get("numero_telefono"),
+      municipio: formData.get("municipio") ? parseInt(formData.get("municipio")) : null,
+      direccion_exacta: formData.get("direccion_exacta")
+    };
+    try {
+      const updatedUser = await api.users.update(editingUser.id, data);
+      setUsersList(prev => prev.map(u => u.id === editingUser.id ? updatedUser : u));
+      setShowUserForm(false);
+      setEditingUser(null);
+      alert("Información del usuario actualizada exitosamente.");
+    } catch (e) {
+      alert("Error al actualizar usuario: " + e.message);
+    }
+  };
+
+  const isUserOnline = (lastActivity) => {
+    if (!lastActivity) return false;
+    const lastActTime = new Date(lastActivity).getTime();
+    const now = Date.now();
+    return (now - lastActTime) < 300000; // 5 minutos de umbral
+  };
+
+  const getRelativeTime = (dateTimeString) => {
+    if (!dateTimeString) return "Nunca";
+    const date = new Date(dateTimeString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return "Hace un momento";
+    if (diffMins < 60) return `Hace ${diffMins} min`;
+    
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `Hace ${diffHours} h`;
+    
+    const diffDays = Math.floor(diffHours / 24);
+    return `Hace ${diffDays} días`;
+  };
 
   const [combos, setCombos] = useState([]);
   const [categoriesList, setCategoriesList] = useState([]);
@@ -494,6 +610,12 @@ export const AdminDashboard = () => {
               className={`pb-2 font-bold transition-all ${activeTab === 'analytics' ? 'text-brand-accent border-b-2 border-brand-accent' : 'text-gray-400 hover:text-gray-600'}`}
             >
               Análisis y Gráficas 📊
+            </button>
+            <button
+              onClick={() => setActiveTab('usuarios')}
+              className={`pb-2 font-bold transition-all ${activeTab === 'usuarios' ? 'text-brand-accent border-b-2 border-brand-accent' : 'text-gray-400 hover:text-gray-600'}`}
+            >
+              Gestión de Usuarios 👥
             </button>
           </div>
           {admin.lastUpdated && activeTab === 'dashboard' && (
@@ -1422,11 +1544,309 @@ export const AdminDashboard = () => {
             stats={admin.stats} 
           />
         )}
+
+        {activeTab === 'usuarios' && (
+          <section className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
+              <div>
+                <h2 className="text-2xl font-serif font-bold flex items-center gap-2">
+                  <Users className="text-brand-accent" size={24} />
+                  Gestión de Usuarios
+                </h2>
+                <p className="text-xs text-gray-500 mt-1">
+                  Administra las cuentas de usuario, sus datos de contacto, verificación de correo y control de accesos.
+                </p>
+              </div>
+              
+              <div className="relative max-w-md w-full">
+                <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                  <Search size={16} />
+                </span>
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre, correo o teléfono..."
+                  value={userSearchTerm}
+                  onChange={(e) => setUserSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 border border-brand-accent/25 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-brand-accent bg-white"
+                />
+              </div>
+            </div>
+
+            {loadingUsers ? (
+              <div className="text-center py-12 text-gray-400 italic">
+                Cargando lista de usuarios...
+              </div>
+            ) : usersList.length === 0 ? (
+              <div className="bg-white p-12 rounded-2xl border border-dashed border-brand-accent/20 text-center text-gray-400">
+                <Users size={48} className="mx-auto mb-4 opacity-20" />
+                <p className="text-lg font-serif italic">No hay usuarios registrados</p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl border border-brand-accent/10 overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead className="bg-paper text-[10px] uppercase tracking-wider font-bold text-gray-500 border-b border-brand-accent/10">
+                      <tr>
+                        <th className="px-6 py-4">Usuario / Correo</th>
+                        <th className="px-6 py-4">Información de Contacto</th>
+                        <th className="px-6 py-4">Ubicación</th>
+                        <th className="px-6 py-4">Estado / Actividad</th>
+                        <th className="px-6 py-4">Rol / Registro</th>
+                        <th className="px-6 py-4 text-right">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-brand-accent/5">
+                      {usersList
+                        .filter(u => {
+                          const query = userSearchTerm.toLowerCase();
+                          return (
+                            u.username?.toLowerCase().includes(query) ||
+                            u.email?.toLowerCase().includes(query) ||
+                            u.first_name?.toLowerCase().includes(query) ||
+                            u.numero_telefono?.includes(query)
+                          );
+                        })
+                        .map(u => {
+                          const online = isUserOnline(u.ultima_actividad);
+                          const userMun = municipalities.find(m => m.id === u.municipio);
+                          const userDep = userMun ? departments.find(d => d.id === userMun.departamento) : null;
+                          
+                          return (
+                            <tr key={u.id} className="hover:bg-paper/30 transition-colors">
+                              <td className="px-6 py-4">
+                                <div className="font-semibold text-gray-800 flex items-center gap-2">
+                                  {u.first_name || u.username}
+                                  {online && (
+                                    <span className="flex h-2.5 w-2.5 relative" title="En línea ahora">
+                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                                  <Mail size={12} className="text-gray-400" />
+                                  <span>{u.email}</span>
+                                </div>
+                              </td>
+                              
+                              <td className="px-6 py-4">
+                                <div className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
+                                  <Phone size={12} className="text-brand-accent" />
+                                  {u.numero_telefono || <span className="text-gray-400 italic">No especificado</span>}
+                                </div>
+                              </td>
+                              
+                              <td className="px-6 py-4">
+                                {userMun ? (
+                                  <div className="text-xs text-gray-700 flex items-start gap-1">
+                                    <MapPin size={12} className="text-brand-accent mt-0.5 shrink-0" />
+                                    <div>
+                                      <p className="font-semibold">{userMun.nombre}</p>
+                                      {userDep && <p className="text-[10px] text-gray-400">{userDep.nombre}</p>}
+                                      {u.direccion_exacta && (
+                                        <p className="text-[9px] text-gray-400 font-normal max-w-[180px] truncate mt-0.5" title={u.direccion_exacta}>
+                                          {u.direccion_exacta}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-gray-400 italic">Sin ubicación registrada</span>
+                                )}
+                              </td>
+                              
+                              <td className="px-6 py-4">
+                                <div className="flex flex-col gap-1">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className={`w-2 h-2 rounded-full ${online ? 'bg-green-500' : 'bg-gray-400'}`} />
+                                    <span className="text-xs font-medium text-gray-600">
+                                      {online ? 'Online' : 'Offline'}
+                                    </span>
+                                  </div>
+                                  <div className="text-[10px] text-gray-400">
+                                    Último uso: {getRelativeTime(u.ultima_actividad)}
+                                  </div>
+                                </div>
+                              </td>
+                              
+                              <td className="px-6 py-4">
+                                <div className="flex flex-col gap-1 items-start">
+                                  <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                                    u.rol === 'admin' ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-blue-100 text-blue-800'
+                                  }`}>
+                                    {u.rol === 'admin' ? 'Admin' : 'Cliente'}
+                                  </span>
+                                  <span className="text-[9px] text-gray-400">
+                                    Registrado: {new Date(u.date_joined).toLocaleDateString()}
+                                  </span>
+                                </div>
+                              </td>
+                              
+                              <td className="px-6 py-4 text-right">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  <button
+                                    onClick={() => {
+                                      setEditingUser(u);
+                                      setShowUserForm(true);
+                                    }}
+                                    className="p-1.5 hover:bg-brand-accent/15 rounded-lg text-brand-accent transition-colors"
+                                    title="Editar datos de contacto"
+                                  >
+                                    <Edit3 size={16} />
+                                  </button>
+                                  
+                                  {/* Botón de activación de cuenta (se muestra solo si está inactivo o no verificado) */}
+                                  {(!u.is_active || !u.email_verificado) && (
+                                    <button
+                                      onClick={() => handleActivateUserManual(u)}
+                                      className="p-1.5 hover:bg-green-50 text-green-600 rounded-lg transition-colors border border-green-200 hover:border-green-300"
+                                      title="Activar cuenta manualmente (Error de verificación)"
+                                    >
+                                      <CheckCircle size={16} />
+                                    </button>
+                                  )}
+                                  
+                                  {/* Botón para vetar / desvetar usuario (los admins no se pueden vetar a sí mismos) */}
+                                  {u.rol !== 'admin' && (
+                                    <button
+                                      onClick={() => handleToggleBanUser(u)}
+                                      className={`p-1.5 rounded-lg transition-colors border ${
+                                        u.is_active 
+                                          ? 'hover:bg-red-50 text-red-500 border-red-200 hover:border-red-300' 
+                                          : 'hover:bg-green-50 text-green-600 border-green-200 hover:border-green-300'
+                                      }`}
+                                      title={u.is_active ? 'Vetar (Banear) usuario' : 'Activar (Desbanear) usuario'}
+                                    >
+                                      {u.is_active ? <Ban size={16} /> : <Check size={16} />}
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
       </>
     )}
 
       {/* Form and Detail Modals */}
       <AnimatePresence>
+        {showUserForm && editingUser && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setShowUserForm(false);
+                setEditingUser(null);
+              }}
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative bg-white w-full max-w-md p-8 rounded-2xl shadow-2xl overflow-hidden"
+            >
+              <div className="flex justify-between items-start mb-6">
+                <h3 className="text-2xl font-serif font-bold">
+                  Editar Usuario
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowUserForm(false);
+                    setEditingUser(null);
+                  }}
+                  className="p-2 hover:bg-paper rounded-full transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <form onSubmit={handleUserEditSubmit} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-500 uppercase">Nombre Completo</label>
+                  <input
+                    required
+                    name="first_name"
+                    defaultValue={editingUser.first_name || ""}
+                    placeholder="Ej. Juan Pérez"
+                    className="w-full px-4 py-2 border border-brand-accent/20 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-brand-accent bg-paper/30"
+                  />
+                </div>
+                
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-500 uppercase">Teléfono de Contacto</label>
+                  <input
+                    name="numero_telefono"
+                    defaultValue={editingUser.numero_telefono || ""}
+                    placeholder="Ej. +505 8888 8888"
+                    className="w-full px-4 py-2 border border-brand-accent/20 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-brand-accent bg-paper/30"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-500 uppercase">Municipio / Departamento</label>
+                    <select
+                      name="municipio"
+                      defaultValue={editingUser.municipio || ""}
+                      className="w-full px-4 py-2 border border-brand-accent/20 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-brand-accent bg-paper/30 bg-white"
+                    >
+                      <option value="">Seleccione ubicación...</option>
+                      {municipalities.map(mun => {
+                        const dep = departments.find(d => d.id === mun.departamento);
+                        return (
+                          <option key={mun.id} value={mun.id}>
+                            {mun.nombre} {dep ? `(${dep.nombre})` : ''}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-500 uppercase">Dirección Exacta</label>
+                  <textarea
+                    name="direccion_exacta"
+                    defaultValue={editingUser.direccion_exacta || ""}
+                    placeholder="Calle, Barrio, nro de casa, etc..."
+                    rows={3}
+                    className="w-full px-4 py-2 border border-brand-accent/20 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-brand-accent bg-paper/30"
+                  />
+                </div>
+                
+                <div className="flex gap-4 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowUserForm(false);
+                      setEditingUser(null);
+                    }}
+                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 rounded-xl text-sm transition-all"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 bg-brand-primary hover:bg-brand-accent text-white font-bold py-2.5 rounded-xl text-sm transition-all shadow-md"
+                  >
+                    Guardar Cambios
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+
         {showForm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
