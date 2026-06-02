@@ -219,8 +219,13 @@ export const api = {
       body: formData,
     });
     if (!res.ok) {
+       if (res.status === 401) {
+         localStorage.removeItem("muebleria_token");
+         localStorage.removeItem("muebleria_user");
+         throw new Error("Tu sesión ha expirado. Por favor, inicia sesión de nuevo para completar esta acción.");
+       }
        const err = await res.json().catch(() => ({}));
-       throw new Error(err.error || "Error al subir imagen");
+       throw new Error(err.error || err.detail || "Error al subir la imagen. Por favor verifica el formato y tamaño (máx 25MB).");
     }
     return res.json();
   },
