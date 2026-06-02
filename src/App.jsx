@@ -376,7 +376,7 @@ export default function App() {
         )}
 
         {currentPage === "login" && (
-          <div className="max-w-md mx-auto">
+          <div className="w-full max-w-lg mx-auto">
             <LoginPage
               onAuth={(data) => {
                 auth.handleAuth(data);

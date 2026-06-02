@@ -259,7 +259,13 @@ export const api = {
   },
 
   locations: {
-    getDepartments: () => apiFetch("/apiDepartamento/Departamento/"),
-    getMunicipalities: () => apiFetch("/apiMunicipio/Municipio/"),
+    getDepartments: async () => {
+      const res = await apiFetch("/apiDepartamento/Departamento/");
+      return Array.isArray(res) ? res : (res.results || []);
+    },
+    getMunicipalities: async () => {
+      const res = await apiFetch("/apiMunicipio/Municipio/");
+      return Array.isArray(res) ? res : (res.results || []);
+    },
   }
 };
