@@ -274,7 +274,7 @@ export const CartDropdown = ({
                           )}
                           <div className="flex items-center justify-between mt-1">
                             <span className="text-xs text-brand-accent font-bold">
-                              C${item.price.toLocaleString()}
+                              C${Number(item.price || 0).toLocaleString()}
                             </span>
                             
                             {/* Quantity control controls */}
@@ -411,7 +411,7 @@ export const CartDropdown = ({
                         return (
                           <div key={idx} className="flex justify-between text-sm text-green-600 font-medium">
                             <span className="flex items-center gap-1">🎁 {combo.nombre}</span>
-                            <span>-C${combo.monto.toLocaleString()}</span>
+                            <span>-C${Number(combo.monto || 0).toLocaleString()}</span>
                           </div>
                         );
                       })}
@@ -421,19 +421,19 @@ export const CartDropdown = ({
                   {(discount || comboDiscountTotal > 0) && (
                     <div className="flex justify-between text-sm text-gray-400">
                       <span>Subtotal</span>
-                      <span>C${rawTotal.toLocaleString()}</span>
+                      <span>C${Number(rawTotal || 0).toLocaleString()}</span>
                     </div>
                   )}
                   {discount && (
                     <div className="flex justify-between text-sm text-green-600 font-medium">
                       <span>Cupón Descuento ({discount.percentage}%)</span>
-                      <span>-C${(rawTotal * discount.percentage / 100).toLocaleString()}</span>
+                      <span>-C${Number((rawTotal * discount.percentage) / 100 || 0).toLocaleString()}</span>
                     </div>
                   )}
                   <div className="flex justify-between items-center">
                     <span className="text-gray-500">Total</span>
                     <span className="text-2xl font-serif font-bold">
-                      C${total.toLocaleString()}
+                      C${Number(total || 0).toLocaleString()}
                     </span>
                   </div>
                   <button
@@ -687,15 +687,15 @@ export const CartDropdown = ({
                   <div className="space-y-2 text-sm border-b border-brand-accent/5 pb-3">
                     <div className="flex justify-between font-medium text-gray-500">
                       <span>Total del pedido</span>
-                      <span>C${total.toLocaleString()}</span>
+                      <span>C${Number(total || 0).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between font-bold text-brand-primary">
                       <span>Anticipo a pagar hoy (50%)</span>
-                      <span>C${(total * 0.5).toLocaleString()}</span>
+                      <span>C${Number(total * 0.5 || 0).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-xs text-gray-400 font-medium">
                       <span>Restante contra entrega (50%)</span>
-                      <span>C${(total * 0.5).toLocaleString()}</span>
+                      <span>C${Number(total * 0.5 || 0).toLocaleString()}</span>
                     </div>
                   </div>
                   <button
@@ -706,9 +706,9 @@ export const CartDropdown = ({
                     {isUploading ? (
                       "Procesando..."
                     ) : paymentMethod === "paypal" ? (
-                      `Pagar Anticipo (C$${(total * 0.5).toLocaleString()}) con PayPal`
+                      `Pagar Anticipo (C$${Number(total * 0.5 || 0).toLocaleString()}) con PayPal`
                     ) : (
-                      `Enviar Comprobante de Anticipo (C$${(total * 0.5).toLocaleString()})`
+                      `Enviar Comprobante de Anticipo (C$${Number(total * 0.5 || 0).toLocaleString()})`
                     )}
                   </button>
                   <button

@@ -208,7 +208,10 @@ export const api = {
   },
 
   users: {
-    getAll: () => apiFetch("/apiUsuarios/Usuario/"),
+    getAll: async () => {
+      const res = await apiFetch("/apiUsuarios/Usuario/");
+      return Array.isArray(res) ? res : (res.results || []);
+    },
     update: (id, data) =>
       apiFetch(`/apiUsuarios/Usuario/${id}/`, {
         method: "PATCH",
