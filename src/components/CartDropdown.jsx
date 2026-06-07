@@ -182,16 +182,16 @@ export const CartDropdown = ({
       }
 
       if (window.gtag) {
-        window.gtag("event", "agregar_info_pago", {
-          moneda: "NIO",
-          valor: Number(total),
-          cupon: discount?.code || "",
-          tipo_pago: paymentMethod === "paypal" ? "PayPal" : "Comprobante",
-          articulos: items.map(item => ({
-            id_articulo: String(item.id),
-            nombre_articulo: item.name,
-            precio: Number(item.price),
-            cantidad: Number(item.quantity)
+        window.gtag("event", "add_payment_info", {
+          currency: "NIO",
+          value: Number(total),
+          coupon: discount?.code || "",
+          payment_type: paymentMethod === "paypal" ? "PayPal" : "Comprobante",
+          items: items.map(item => ({
+            item_id: String(item.id),
+            item_name: item.name,
+            price: Number(item.price),
+            quantity: Number(item.quantity)
           }))
         });
       }
@@ -440,15 +440,15 @@ export const CartDropdown = ({
                     disabled={items.length === 0}
                     onClick={() => {
                       if (window.gtag) {
-                        window.gtag("event", "iniciar_pago", {
-                          moneda: "NIO",
-                          valor: Number(total),
-                          cupon: discount?.code || "",
-                          articulos: items.map(item => ({
-                            id_articulo: String(item.id),
-                            nombre_articulo: item.name,
-                            precio: Number(item.price),
-                            cantidad: Number(item.quantity)
+                        window.gtag("event", "begin_checkout", {
+                          currency: "NIO",
+                          value: Number(total),
+                          coupon: discount?.code || "",
+                          items: items.map(item => ({
+                            item_id: String(item.id),
+                            item_name: item.name,
+                            price: Number(item.price),
+                            quantity: Number(item.quantity)
                           }))
                         });
                       }
@@ -525,16 +525,16 @@ export const CartDropdown = ({
                         return;
                       }
                       if (window.gtag) {
-                        window.gtag("event", "agregar_info_envio", {
-                          moneda: "NIO",
-                          valor: Number(total),
-                          cupon: discount?.code || "",
-                          tipo_envio: shippingType === "delivery" ? "Delivery" : "Pickup",
-                          articulos: items.map(item => ({
-                            id_articulo: String(item.id),
-                            nombre_articulo: item.name,
-                            precio: Number(item.price),
-                            cantidad: Number(item.quantity)
+                        window.gtag("event", "add_shipping_info", {
+                          currency: "NIO",
+                          value: Number(total),
+                          coupon: discount?.code || "",
+                          shipping_tier: shippingType === "delivery" ? "Delivery" : "Pickup",
+                          items: items.map(item => ({
+                            item_id: String(item.id),
+                            item_name: item.name,
+                            price: Number(item.price),
+                            quantity: Number(item.quantity)
                           }))
                         });
                       }

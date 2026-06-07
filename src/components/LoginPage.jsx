@@ -78,12 +78,12 @@ export const LoginPage = ({ onAuth }) => {
         // Google Analytics event tracking
         if (window.gtag) {
           if (mode === "register") {
-            window.gtag("event", "registro_usuario", {
-              metodo: "email"
+            window.gtag("event", "sign_up", {
+              method: "email"
             });
           } else {
-            window.gtag("event", "iniciar_sesion", {
-              metodo: "email"
+            window.gtag("event", "login", {
+              method: "email"
             });
           }
         }
