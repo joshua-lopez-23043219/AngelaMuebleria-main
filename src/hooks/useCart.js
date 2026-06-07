@@ -27,14 +27,14 @@ export function useCart(user) {
 
     // Google Analytics tracking
     if (window.gtag) {
-      window.gtag("event", "add_to_cart", {
-        currency: "NIO",
-        value: Number(product.price),
-        items: [{
-          item_id: String(product.id),
-          item_name: product.name,
-          price: Number(product.price),
-          quantity: Number(1)
+      window.gtag("event", "agregar_al_carrito", {
+        moneda: "NIO",
+        valor: Number(product.price),
+        articulos: [{
+          id_articulo: String(product.id),
+          nombre_articulo: product.name,
+          precio: Number(product.price),
+          cantidad: Number(1)
         }]
       });
     }
@@ -46,14 +46,14 @@ export function useCart(user) {
     setCart((prev) => {
       const item = prev.find(p => p.id === id);
       if (item && window.gtag) {
-        window.gtag("event", "remove_from_cart", {
-          currency: "NIO",
-          value: Number(item.price * item.quantity),
-          items: [{
-            item_id: String(item.id),
-            item_name: item.name,
-            price: Number(item.price),
-            quantity: Number(item.quantity)
+        window.gtag("event", "eliminar_del_carrito", {
+          moneda: "NIO",
+          valor: Number(item.price * item.quantity),
+          articulos: [{
+            id_articulo: String(item.id),
+            nombre_articulo: item.name,
+            precio: Number(item.price),
+            cantidad: Number(item.quantity)
           }]
         });
       }
@@ -71,25 +71,25 @@ export function useCart(user) {
       // Google Analytics tracking
       if (window.gtag) {
         if (amount > 0) {
-          window.gtag("event", "add_to_cart", {
-            currency: "NIO",
-            value: Number(item.price),
-            items: [{
-              item_id: String(item.id),
-              item_name: item.name,
-              price: Number(item.price),
-              quantity: Number(amount)
+          window.gtag("event", "agregar_al_carrito", {
+            moneda: "NIO",
+            valor: Number(item.price),
+            articulos: [{
+              id_articulo: String(item.id),
+              nombre_articulo: item.name,
+              precio: Number(item.price),
+              cantidad: Number(amount)
             }]
           });
         } else if (amount < 0) {
-          window.gtag("event", "remove_from_cart", {
-            currency: "NIO",
-            value: Number(item.price),
-            items: [{
-              item_id: String(item.id),
-              item_name: item.name,
-              price: Number(item.price),
-              quantity: Number(Math.abs(amount))
+          window.gtag("event", "eliminar_del_carrito", {
+            moneda: "NIO",
+            valor: Number(item.price),
+            articulos: [{
+              id_articulo: String(item.id),
+              nombre_articulo: item.name,
+              precio: Number(item.price),
+              cantidad: Number(Math.abs(amount))
             }]
           });
         }
@@ -283,14 +283,14 @@ export function useCart(user) {
   // Google Analytics view_cart event tracking
   useEffect(() => {
     if (isCartOpen && window.gtag && cart.length > 0) {
-      window.gtag("event", "view_cart", {
-        currency: "NIO",
-        value: Number(cartTotal),
-        items: cart.map(item => ({
-          item_id: String(item.id),
-          item_name: item.name,
-          price: Number(item.price),
-          quantity: Number(item.quantity)
+      window.gtag("event", "ver_carrito", {
+        moneda: "NIO",
+        valor: Number(cartTotal),
+        articulos: cart.map(item => ({
+          id_articulo: String(item.id),
+          nombre_articulo: item.name,
+          precio: Number(item.price),
+          cantidad: Number(item.quantity)
         }))
       });
     }
@@ -327,16 +327,16 @@ export function useCart(user) {
           }
         }, 1000); // 1-second fallback timeout for robustness
 
-        window.gtag("event", "purchase", {
-          transaction_id: paymentData.paypal_order_id || "ORDER_" + Math.random().toString(36).substring(2, 11),
-          value: Number(cartTotal),
-          currency: "NIO",
-          coupon: discount?.code || "",
-          items: cart.map(item => ({
-            item_id: String(item.id),
-            item_name: item.name,
-            price: Number(item.price),
-            quantity: Number(item.quantity)
+        window.gtag("event", "compra", {
+          id_transaccion: paymentData.paypal_order_id || "ORDER_" + Math.random().toString(36).substring(2, 11),
+          valor: Number(cartTotal),
+          moneda: "NIO",
+          cupon: discount?.code || "",
+          articulos: cart.map(item => ({
+            id_articulo: String(item.id),
+            nombre_articulo: item.name,
+            precio: Number(item.price),
+            cantidad: Number(item.quantity)
           })),
           event_callback: () => {
             if (!callbackCalled) {

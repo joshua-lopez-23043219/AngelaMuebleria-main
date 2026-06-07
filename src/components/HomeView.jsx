@@ -13,7 +13,11 @@ import {
   Users,
   Gift,
   Sparkles,
-  ShoppingBag
+  ShoppingBag,
+  MapPin,
+  Mail,
+  MessageCircle,
+  Facebook
 } from "lucide-react";
 import { api } from "../services/api";
 
@@ -23,6 +27,14 @@ export const HomeView = ({ onStartShopping, onAddToCart }) => {
   const [combos, setCombos] = useState([]);
   const [loadingCombos, setLoadingCombos] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  const trackContactClick = (type) => {
+    if (window.gtag) {
+      window.gtag("event", "clic_contacto", {
+        tipo: type
+      });
+    }
+  };
 
   useEffect(() => {
     const fetchActiveCombos = async () => {
@@ -508,6 +520,97 @@ export const HomeView = ({ onStartShopping, onAddToCart }) => {
           </div>
         </section>
       )}
+
+      {/* Sección de Contacto y Ubicación */}
+      <section className="py-20 px-8 bg-paper">
+        <div className="max-w-7xl mx-auto space-y-12">
+          <div className="text-center max-w-2xl mx-auto space-y-4">
+            <span className="text-brand-accent font-mono text-xs uppercase tracking-[0.3em] font-bold">
+              Contacto y Ubicación
+            </span>
+            <h2 className="text-4xl font-serif font-bold text-brand-primary">
+              Visítanos o ponte en contacto
+            </h2>
+            <p className="text-gray-500">
+              Estamos ubicados en Masatepe, Masaya. Con gusto atenderemos todas tus consultas y cotizaciones.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Dirección */}
+            <motion.div
+              whileHover={{ y: -5 }}
+              onClick={() => {
+                trackContactClick("direccion");
+                window.open("https://www.google.com/maps/search/?api=1&query=Del+centro+de+Salud+2c+al+norte,+Masatepe,+Nicaragua", "_blank");
+              }}
+              className="bg-white p-8 rounded-3xl border border-brand-accent/5 shadow-md flex flex-col items-center text-center space-y-4 cursor-pointer hover:shadow-xl transition-all duration-300"
+            >
+              <div className="p-4 bg-brand-accent/10 text-brand-accent rounded-full">
+                <MapPin size={28} />
+              </div>
+              <h4 className="text-lg font-serif font-bold text-brand-primary">Nuestra Dirección</h4>
+              <p className="text-gray-500 text-xs leading-relaxed">
+                Del centro de Salud 2c al norte,<br />Masatepe, Nicaragua
+              </p>
+            </motion.div>
+
+            {/* WhatsApp */}
+            <motion.div
+              whileHover={{ y: -5 }}
+              onClick={() => {
+                trackContactClick("whatsapp");
+                window.open("https://wa.me/50587489573", "_blank");
+              }}
+              className="bg-white p-8 rounded-3xl border border-brand-accent/5 shadow-md flex flex-col items-center text-center space-y-4 cursor-pointer hover:shadow-xl transition-all duration-300"
+            >
+              <div className="p-4 bg-green-50 text-green-600 rounded-full">
+                <MessageCircle size={28} />
+              </div>
+              <h4 className="text-lg font-serif font-bold text-brand-primary">WhatsApp</h4>
+              <p className="text-gray-500 text-xs leading-relaxed">
+                Escríbenos directamente para cotizar:<br /><strong>+505 8748 9573</strong>
+              </p>
+            </motion.div>
+
+            {/* Facebook */}
+            <motion.div
+              whileHover={{ y: -5 }}
+              onClick={() => {
+                trackContactClick("facebook");
+                window.open("https://www.facebook.com/share/1Db8EC4GYX/", "_blank");
+              }}
+              className="bg-white p-8 rounded-3xl border border-brand-accent/5 shadow-md flex flex-col items-center text-center space-y-4 cursor-pointer hover:shadow-xl transition-all duration-300"
+            >
+              <div className="p-4 bg-blue-50 text-blue-600 rounded-full">
+                <Facebook size={28} />
+              </div>
+              <h4 className="text-lg font-serif font-bold text-brand-primary">Facebook</h4>
+              <p className="text-gray-500 text-xs leading-relaxed">
+                Síguenos en nuestra página oficial:<br /><strong>Angela Mueblería</strong>
+              </p>
+            </motion.div>
+
+            {/* Correo */}
+            <motion.div
+              whileHover={{ y: -5 }}
+              onClick={() => {
+                trackContactClick("correo");
+                window.open("mailto:angelamuebleria29@gmail.com", "_blank");
+              }}
+              className="bg-white p-8 rounded-3xl border border-brand-accent/5 shadow-md flex flex-col items-center text-center space-y-4 cursor-pointer hover:shadow-xl transition-all duration-300"
+            >
+              <div className="p-4 bg-amber-50 text-brand-accent rounded-full">
+                <Mail size={28} />
+              </div>
+              <h4 className="text-lg font-serif font-bold text-brand-primary">Correo Electrónico</h4>
+              <p className="text-gray-500 text-xs leading-relaxed">
+                Envíanos tus propuestas o sugerencias:<br /><strong>angelamuebleria29@gmail.com</strong>
+              </p>
+            </motion.div>
+          </div>
+        </div>
+      </section>
 
       {/* CTA Final */}
       <section className="px-4 md:px-8 pb-24">
