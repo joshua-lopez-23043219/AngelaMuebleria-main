@@ -5,6 +5,14 @@ import { MessageCircle, X, Facebook, Send, HelpCircle, PhoneCall } from "lucide-
 export const SupportWidget = ({ onNavigate }) => {
   const [isOpen, setIsOpen] = useState(false);
 
+  const trackWidgetClick = (type) => {
+    if (window.gtag) {
+      window.gtag("event", "clic_contacto", {
+        tipo: type
+      });
+    }
+  };
+
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
       {/* Chat Window */}
@@ -63,9 +71,10 @@ export const SupportWidget = ({ onNavigate }) => {
                   
                   {/* WhatsApp Button */}
                   <a
-                    href="https://wa.me/+50558637953?text=Hola%20,%20quiero%20m%C3%A1s%20informaci%C3%B3n%20sobre%20sus%20muebles."
+                    href="https://wa.me/50587489573?text=Hola%20,%20quiero%20m%C3%A1s%20informaci%C3%B3n%20sobre%20sus%20muebles."
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => trackWidgetClick("whatsapp")}
                     className="flex items-center justify-between p-2.5 bg-green-50 hover:bg-green-100/80 border border-green-200/50 rounded-xl text-green-700 font-bold text-xs transition-all w-full cursor-pointer"
                   >
                     <span className="flex items-center gap-2">
@@ -76,9 +85,10 @@ export const SupportWidget = ({ onNavigate }) => {
 
                   {/* Facebook Button */}
                   <a
-                    href="https://www.facebook.com/share/14TiVmFanLB/"
+                    href="https://www.facebook.com/share/1Db8EC4GYX/"
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => trackWidgetClick("facebook")}
                     className="flex items-center justify-between p-2.5 bg-blue-50 hover:bg-blue-100/80 border border-blue-200/50 rounded-xl text-blue-700 font-bold text-xs transition-all w-full cursor-pointer"
                   >
                     <span className="flex items-center gap-2">
@@ -103,7 +113,8 @@ export const SupportWidget = ({ onNavigate }) => {
 
                   {/* Tel Button */}
                   <a
-                    href="tel:+50558637953"
+                    href="tel:+50587489573"
+                    onClick={() => trackWidgetClick("telefono")}
                     className="flex items-center justify-between p-2.5 bg-amber-50 hover:bg-amber-100/80 border border-amber-200/50 rounded-xl text-amber-700 font-bold text-xs transition-all w-full cursor-pointer"
                   >
                     <span className="flex items-center gap-2">
@@ -124,7 +135,8 @@ export const SupportWidget = ({ onNavigate }) => {
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && e.target.value.trim()) {
                     const txt = encodeURIComponent(e.target.value);
-                    window.open(`https://wa.me/+50558637953?text=${txt}`, "_blank");
+                    trackWidgetClick("whatsapp");
+                    window.open(`https://wa.me/50587489573?text=${txt}`, "_blank");
                     e.target.value = "";
                   }
                 }}
@@ -134,7 +146,8 @@ export const SupportWidget = ({ onNavigate }) => {
                   const inputEl = e.currentTarget.previousSibling;
                   const val = inputEl ? inputEl.value.trim() : "";
                   const txt = val ? encodeURIComponent(val) : "Hola%20,%20quiero%20m%C3%A1s%20informaci%C3%B3n%20sobre%20sus%20muebles.";
-                  window.open(`https://wa.me/+50558637953?text=${txt}`, "_blank");
+                  trackWidgetClick("whatsapp");
+                  window.open(`https://wa.me/50587489573?text=${txt}`, "_blank");
                   if (inputEl) inputEl.value = "";
                 }}
                 className="p-2 bg-brand-primary hover:bg-brand-accent text-white rounded-xl transition-all cursor-pointer"
