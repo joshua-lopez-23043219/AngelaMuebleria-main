@@ -7,9 +7,7 @@ export const SupportWidget = ({ onNavigate }) => {
 
   const trackWidgetClick = (type) => {
     if (window.gtag) {
-      window.gtag("event", "clic_contacto", {
-        tipo: type
-      });
+      window.gtag("event", `clic_${type}`);
     }
   };
 

@@ -30,9 +30,7 @@ export const HomeView = ({ onStartShopping, onAddToCart }) => {
 
   const trackContactClick = (type) => {
     if (window.gtag) {
-      window.gtag("event", "clic_contacto", {
-        tipo: type
-      });
+      window.gtag("event", `clic_${type}`);
     }
   };
 
