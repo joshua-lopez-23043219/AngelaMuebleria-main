@@ -117,6 +117,17 @@ export default function App() {
   const prod = useProducts();
   const cart = useCart(auth.user);
 
+  // Track page views in Google Analytics on navigation
+  React.useEffect(() => {
+    if (window.gtag) {
+      window.gtag("event", "page_view", {
+        page_title: currentPage === "home" ? "Inicio" : currentPage.toUpperCase(),
+        page_location: window.location.href,
+        page_path: `/${currentPage}`
+      });
+    }
+  }, [currentPage]);
+
   // Set up custom notification listener & override window.alert
   React.useEffect(() => {
     const handleCustomAlert = (e) => {
