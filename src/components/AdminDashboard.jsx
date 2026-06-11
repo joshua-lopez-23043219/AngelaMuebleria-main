@@ -156,6 +156,22 @@ export const AdminDashboard = () => {
   });
   const [sendingEmail, setSendingEmail] = useState(false);
 
+  // Nuevos estados para marketing extendido (1:1 y Cupones)
+  const [emailSubTab, setEmailSubTab] = useState("mass"); // "mass" | "individual" | "coupons"
+  const [individualEmailForm, setIndividualEmailForm] = useState({
+    email: "",
+    subject: "",
+    message: "",
+  });
+  const [sendingIndividualEmail, setSendingIndividualEmail] = useState(false);
+  const [couponForm, setCouponForm] = useState({
+    cantidad: 1,
+    porcentaje: 10,
+  });
+  const [generatingCoupons, setGeneratingCoupons] = useState(false);
+  const [generatedCouponsList, setGeneratedCouponsList] = useState([]);
+
+
   // Estados de Gestión de Usuarios
   const [usersList, setUsersList] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -451,6 +467,58 @@ export const AdminDashboard = () => {
       setSendingEmail(false);
     }
   };
+
+  const handleSendIndividualEmail = async (e) => {
+    e.preventDefault();
+    if (!individualEmailForm.email.trim() || !individualEmailForm.subject.trim() || !individualEmailForm.message.trim()) {
+      alert("Por favor rellena todos los campos.");
+      return;
+    }
+
+    if (!confirm(`¿Estás seguro de que deseas enviar este correo individual a ${individualEmailForm.email}?`)) {
+      return;
+    }
+
+    setSendingIndividualEmail(true);
+    try {
+      const res = await api.admin.sendIndividualEmail(individualEmailForm);
+      alert(res.detail || "Correo enviado exitosamente.");
+      setIndividualEmailForm({ email: "", subject: "", message: "" });
+    } catch (err) {
+      alert("Error al enviar el correo individual: " + err.message);
+    } finally {
+      setSendingIndividualEmail(false);
+    }
+  };
+
+  const handleGenerateCoupons = async (e) => {
+    e.preventDefault();
+    const qty = parseInt(couponForm.cantidad);
+    const pct = parseFloat(couponForm.porcentaje);
+
+    if (isNaN(qty) || qty < 1 || qty > 100) {
+      alert("Por favor introduce una cantidad de cupones válida (1 - 100).");
+      return;
+    }
+    if (isNaN(pct) || pct < 1 || pct > 100) {
+      alert("Por favor introduce un porcentaje de descuento válido (1 - 100).");
+      return;
+    }
+
+    setGeneratingCoupons(true);
+    try {
+      const res = await api.marketing.generateCoupons({ cantidad: qty, porcentaje: pct });
+      alert(res.detail || "Cupones creados exitosamente.");
+      if (res.coupons) {
+        setGeneratedCouponsList(res.coupons);
+      }
+    } catch (err) {
+      alert("Error al generar cupones: " + err.message);
+    } finally {
+      setGeneratingCoupons(false);
+    }
+  };
+
 
   const loadCustomizations = async () => {
     try {
@@ -1474,66 +1542,239 @@ export const AdminDashboard = () => {
         {activeTab === 'email' && (
           <section className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
             <div className="flex justify-between items-center border-b pb-2">
-              <h2 className="text-2xl font-serif font-bold">Envío de Correo Masivo</h2>
+              <h2 className="text-2xl font-serif font-bold">Marketing y Promociones</h2>
               <span className="bg-brand-primary text-white px-3 py-1 rounded-full text-xs font-bold">
-                Marketing y Boletines
+                Boletines y Cupones
               </span>
             </div>
 
-            <div className="max-w-2xl bg-white p-8 rounded-3xl border border-brand-accent/10 shadow-sm space-y-6">
-              <div className="space-y-2">
-                <h3 className="text-lg font-serif font-bold text-gray-800">Enviar Campaña a Clientes y Suscriptores</h3>
-                <p className="text-xs text-gray-500 leading-relaxed">
-                  Esta herramienta permite enviar un correo informativo masivo a todos los clientes registrados y usuarios suscritos al boletín de noticias de Angela Mueblería. El correo incluirá automáticamente una sección destacada con los primeros 10 productos activos de tu catálogo junto con sus precios y descripciones.
-                </p>
-              </div>
-
-              <form onSubmit={handleSendMassEmail} className="space-y-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Asunto del Correo</label>
-                  <input
-                    required
-                    type="text"
-                    placeholder="Ej: ¡Descubre nuestro catálogo exclusivo de temporada!"
-                    value={emailForm.subject}
-                    onChange={(e) => setEmailForm({ ...emailForm, subject: e.target.value })}
-                    className="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-1 focus:ring-brand-accent focus:outline-none"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Título del Boletín (Encabezado)</label>
-                  <input
-                    required
-                    type="text"
-                    placeholder="Ej: Nuevos mimbre y diseños de temporada"
-                    value={emailForm.title}
-                    onChange={(e) => setEmailForm({ ...emailForm, title: e.target.value })}
-                    className="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-1 focus:ring-brand-accent focus:outline-none"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Mensaje / Introducción</label>
-                  <textarea
-                    required
-                    rows={6}
-                    placeholder="Escribe el mensaje introductorio para tus clientes. Ej: Nos complace presentarte nuestra más reciente colección de muebles artesanales..."
-                    value={emailForm.message}
-                    onChange={(e) => setEmailForm({ ...emailForm, message: e.target.value })}
-                    className="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-1 focus:ring-brand-accent focus:outline-none font-sans"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={sendingEmail}
-                  className="w-full bg-brand-primary hover:bg-brand-accent text-white font-bold py-3.5 rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                >
-                  {sendingEmail ? "Enviando correos..." : "Enviar Correo Masivo ✉"}
-                </button>
-              </form>
+            {/* Sub-tabs selection */}
+            <div className="flex border-b border-gray-150 gap-6">
+              <button
+                onClick={() => setEmailSubTab("mass")}
+                className={`pb-2.5 text-sm font-bold transition-all relative cursor-pointer ${
+                  emailSubTab === 'mass' ? 'text-brand-accent font-extrabold' : 'text-gray-400 hover:text-gray-600'
+                }`}
+              >
+                Campaña Masiva
+                {emailSubTab === 'mass' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-accent rounded-full" />}
+              </button>
+              <button
+                onClick={() => setEmailSubTab("individual")}
+                className={`pb-2.5 text-sm font-bold transition-all relative cursor-pointer ${
+                  emailSubTab === 'individual' ? 'text-brand-accent font-extrabold' : 'text-gray-400 hover:text-gray-600'
+                }`}
+              >
+                Correo 1:1 (Individual)
+                {emailSubTab === 'individual' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-accent rounded-full" />}
+              </button>
+              <button
+                onClick={() => setEmailSubTab("coupons")}
+                className={`pb-2.5 text-sm font-bold transition-all relative cursor-pointer ${
+                  emailSubTab === 'coupons' ? 'text-brand-accent font-extrabold' : 'text-gray-400 hover:text-gray-600'
+                }`}
+              >
+                Generador de Cupones
+                {emailSubTab === 'coupons' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-accent rounded-full" />}
+              </button>
             </div>
+
+            {/* SUBTAB 1: Mass Email Campaign */}
+            {emailSubTab === 'mass' && (
+              <div className="max-w-2xl bg-white p-8 rounded-3xl border border-brand-accent/10 shadow-sm space-y-6">
+                <div className="space-y-2">
+                  <h3 className="text-lg font-serif font-bold text-gray-800">Enviar Campaña a Clientes y Suscriptores</h3>
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    Esta herramienta permite enviar un correo informativo masivo a todos los clientes registrados y usuarios suscritos al boletín de noticias de Angela Mueblería. El correo incluirá automáticamente una sección destacada con los primeros 10 productos activos de tu catálogo junto con sus precios y descripciones.
+                  </p>
+                </div>
+
+                <form onSubmit={handleSendMassEmail} className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Asunto del Correo</label>
+                    <input
+                      required
+                      type="text"
+                      placeholder="Ej: ¡Descubre nuestro catálogo exclusivo de temporada!"
+                      value={emailForm.subject}
+                      onChange={(e) => setEmailForm({ ...emailForm, subject: e.target.value })}
+                      className="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-1 focus:ring-brand-accent focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Título del Boletín (Encabezado)</label>
+                    <input
+                      required
+                      type="text"
+                      placeholder="Ej: Nuevos mimbre y diseños de temporada"
+                      value={emailForm.title}
+                      onChange={(e) => setEmailForm({ ...emailForm, title: e.target.value })}
+                      className="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-1 focus:ring-brand-accent focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Mensaje / Introducción</label>
+                    <textarea
+                      required
+                      rows={6}
+                      placeholder="Escribe el mensaje introductorio para tus clientes. Ej: Nos complace presentarte nuestra más reciente colección de muebles artesanales..."
+                      value={emailForm.message}
+                      onChange={(e) => setEmailForm({ ...emailForm, message: e.target.value })}
+                      className="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-1 focus:ring-brand-accent focus:outline-none font-sans"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={sendingEmail}
+                    className="w-full bg-brand-primary hover:bg-brand-accent text-white font-bold py-3.5 rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    {sendingEmail ? "Enviando correos..." : "Enviar Correo Masivo ✉"}
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {/* SUBTAB 2: Individual 1:1 Email */}
+            {emailSubTab === 'individual' && (
+              <div className="max-w-2xl bg-white p-8 rounded-3xl border border-brand-accent/10 shadow-sm space-y-6">
+                <div className="space-y-2">
+                  <h3 className="text-lg font-serif font-bold text-gray-800">Enviar Correo 1:1 a un Cliente</h3>
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    Envía un mensaje directo y personalizado al correo de un cliente registrado. Ideal para coordinaciones particulares o para enviarle un código de descuento de recompensa.
+                  </p>
+                </div>
+
+                <form onSubmit={handleSendIndividualEmail} className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Cliente Destinatario</label>
+                    <select
+                      required
+                      value={individualEmailForm.email}
+                      onChange={(e) => setIndividualEmailForm({ ...individualEmailForm, email: e.target.value })}
+                      className="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-1 focus:ring-brand-accent focus:outline-none bg-white"
+                    >
+                      <option value="">-- Selecciona un cliente --</option>
+                      {usersList
+                        .filter(u => u.email)
+                        .map(u => (
+                          <option key={u.id} value={u.email}>
+                            {u.first_name || u.username} ({u.email}) - {u.rol === 'admin' ? 'Admin' : 'Cliente'}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Asunto del Correo</label>
+                    <input
+                      required
+                      type="text"
+                      placeholder="Ej: Código de descuento especial para ti"
+                      value={individualEmailForm.subject}
+                      onChange={(e) => setIndividualEmailForm({ ...individualEmailForm, subject: e.target.value })}
+                      className="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-1 focus:ring-brand-accent focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Mensaje Personalizado</label>
+                    <textarea
+                      required
+                      rows={6}
+                      placeholder="Escribe tu mensaje privado para el cliente..."
+                      value={individualEmailForm.message}
+                      onChange={(e) => setIndividualEmailForm({ ...individualEmailForm, message: e.target.value })}
+                      className="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-1 focus:ring-brand-accent focus:outline-none font-sans"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={sendingIndividualEmail}
+                    className="w-full bg-brand-primary hover:bg-brand-accent text-white font-bold py-3.5 rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    {sendingIndividualEmail ? "Enviando correo..." : "Enviar Correo Personalizado ✉"}
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {/* SUBTAB 3: Coupon Generator */}
+            {emailSubTab === 'coupons' && (
+              <div className="max-w-2xl bg-white p-8 rounded-3xl border border-brand-accent/10 shadow-sm space-y-6">
+                <div className="space-y-2">
+                  <h3 className="text-lg font-serif font-bold text-gray-800">Generar Códigos de Descuento Únicos</h3>
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    Genera múltiples códigos promocionales aleatorios que no se repiten. Estos códigos se registran en el sistema para que tus clientes puedan validarlos al momento del pago.
+                  </p>
+                </div>
+
+                <form onSubmit={handleGenerateCoupons} className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Cantidad de Códigos</label>
+                      <input
+                        required
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={couponForm.cantidad}
+                        onChange={(e) => setCouponForm({ ...couponForm, cantidad: parseInt(e.target.value) || 0 })}
+                        className="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-1 focus:ring-brand-accent focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">% de Descuento (Valor)</label>
+                      <input
+                        required
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={couponForm.porcentaje}
+                        onChange={(e) => setCouponForm({ ...couponForm, porcentaje: parseFloat(e.target.value) || 0 })}
+                        className="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-1 focus:ring-brand-accent focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={generatingCoupons}
+                    className="w-full bg-brand-primary hover:bg-brand-accent text-white font-bold py-3.5 rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    {generatingCoupons ? "Generando códigos..." : "Generar Códigos Promocionales ⚡"}
+                  </button>
+                </form>
+
+                {/* Display generated coupons */}
+                {generatedCouponsList.length > 0 && (
+                  <div className="p-6 bg-green-50/50 border border-green-200/50 rounded-2xl space-y-3 animate-in fade-in duration-300">
+                    <h4 className="text-xs font-bold text-green-800 uppercase tracking-wider">Cupones Generados</h4>
+                    <p className="text-[10px] text-green-600">Haz clic en cualquier código para copiarlo de inmediato:</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                      {generatedCouponsList.map((c, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => {
+                            navigator.clipboard.writeText(c.code);
+                            alert(`Código ${c.code} copiado al portapapeles!`);
+                          }}
+                          className="p-3 bg-white border border-green-200 hover:border-green-400 rounded-xl font-mono text-xs font-bold text-center text-green-700 shadow-sm cursor-pointer transition-all hover:scale-105 active:scale-95 flex flex-col justify-center items-center gap-1"
+                          title="Copiar código"
+                        >
+                          <span>{c.code}</span>
+                          <span className="text-[9px] font-sans font-normal text-gray-400">-{c.percentage}% desc</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </section>
         )}
 
@@ -1590,6 +1831,8 @@ export const AdminDashboard = () => {
                         <th className="px-6 py-4">Usuario / Correo</th>
                         <th className="px-6 py-4">Información de Contacto</th>
                         <th className="px-6 py-4">Ubicación</th>
+                        <th className="px-6 py-4">Pedidos</th>
+                        <th className="px-6 py-4">Total Gastado</th>
                         <th className="px-6 py-4">Estado / Actividad</th>
                         <th className="px-6 py-4">Rol / Registro</th>
                         <th className="px-6 py-4 text-right">Acciones</th>
@@ -1653,6 +1896,18 @@ export const AdminDashboard = () => {
                                 ) : (
                                   <span className="text-xs text-gray-400 italic">Sin ubicación registrada</span>
                                 )}
+                              </td>
+                              
+                              <td className="px-6 py-4">
+                                <span className="font-mono text-xs font-semibold text-gray-700 bg-gray-100 px-2 py-1 rounded-md">
+                                  {u.total_pedidos || 0}
+                                </span>
+                              </td>
+                              
+                              <td className="px-6 py-4">
+                                <span className="font-mono text-xs font-bold text-green-600 bg-green-50 px-2.5 py-1 rounded-md">
+                                  C$ {(u.total_gastado || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </span>
                               </td>
                               
                               <td className="px-6 py-4">

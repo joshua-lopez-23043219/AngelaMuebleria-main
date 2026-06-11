@@ -205,7 +205,13 @@ export const api = {
         method: "POST",
         body: JSON.stringify(data),
       }),
+    sendIndividualEmail: (data) =>
+      apiFetch("/apiUsuarios/Usuario/enviar_correo_individual/", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
   },
+
 
   users: {
     getAll: async () => {
@@ -277,6 +283,11 @@ export const api = {
       apiFetch("/apiSuscripcion/Suscripcion/", { method: "POST", body: JSON.stringify({ email }) }),
     validateDiscount: (code) => 
       apiFetch("/apiSuscripcion/Suscripcion/validate-discount/", { method: "POST", body: JSON.stringify({ code }) }),
+    generateCoupons: (data) =>
+      apiFetch("/apiSuscripcion/Suscripcion/generar-cupones/", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
   },
 
   locations: {
