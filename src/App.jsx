@@ -19,7 +19,6 @@ import { FurnitureBuilder } from "./components/FurnitureBuilder";
 import { HomeView } from "./components/HomeView";
 import { ResetPasswordPage } from "./components/ResetPasswordPage";
 import { FAQView } from "./components/FAQView";
-import { SupportWidget } from "./components/SupportWidget";
 
 // Canvas Confetti Celebration Emitter
 const fireConfetti = () => {
@@ -674,9 +673,6 @@ export default function App() {
           </div>
         )}
       </AnimatePresence>
-
-      {/* Floating Support Widget */}
-      <SupportWidget onNavigate={setCurrentPage} />
     </div>
   );
 }
