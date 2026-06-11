@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { X, Box, ShoppingCart, Sparkles, CheckCircle, AlertCircle, Info, AlertTriangle } from "lucide-react";
+import { X, Box, ShoppingCart, Sparkles, CheckCircle, AlertCircle, Info, AlertTriangle, MapPin, Mail, MessageCircle, Facebook } from "lucide-react";
 import { api } from "./services/api";
 
 // Hooks (JS Logic)
@@ -126,6 +126,12 @@ export default function App() {
       });
     }
   }, [currentPage]);
+
+  const trackFooterClick = (type) => {
+    if (window.gtag) {
+      window.gtag("event", `clic_${type}`);
+    }
+  };
 
   // Set up custom notification listener & override window.alert
   React.useEffect(() => {
@@ -563,54 +569,130 @@ export default function App() {
       </AnimatePresence>
 
       {/* Footer Section */}
-      <footer className="border-t border-brand-accent/10 py-12 px-8 bg-white mt-12">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <div 
-            className="flex items-center gap-3 cursor-pointer"
-            onClick={() => setCurrentPage("home")}
-          >
-            <span 
-              className="text-[#1A4B3C] text-4xl"
-              style={{ fontFamily: "'Great Vibes', cursive", transform: 'translateY(-2px)' }}
-            >
-              Angela
-            </span>
-            <span 
-              className="text-brand-accent tracking-[0.25em] text-xs font-bold uppercase"
-              style={{ fontFamily: "'Montserrat', sans-serif" }}
-            >
-              Mueblería
-            </span>
-          </div>
-          <div className="flex gap-8 text-xs font-bold uppercase tracking-widest text-gray-400">
-            <button
-              onClick={() => setCurrentPage("catalog")}
-              className="hover:text-brand-accent transition-colors"
-            >
-              Diseño
-            </button>
-            <button
+      <footer className="border-t border-brand-accent/10 py-16 px-8 bg-paper mt-20 text-left">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-12 pb-12 border-b border-brand-accent/10">
+          
+          {/* Column 1: Brand */}
+          <div className="space-y-4">
+            <div 
+              className="flex items-center gap-3 cursor-pointer"
               onClick={() => setCurrentPage("home")}
-              className="hover:text-brand-accent transition-colors"
             >
-              Historia
-            </button>
-            <button
-              onClick={() => setCurrentPage("builder")}
-              className="hover:text-brand-accent transition-colors"
-            >
-              Personalizar
-            </button>
-            <button
-              onClick={() => setCurrentPage("faq")}
-              className="hover:text-brand-accent transition-colors"
-            >
-              FAQ
-            </button>
+              <span 
+                className="text-[#1A4B3C] text-4xl"
+                style={{ fontFamily: "'Great Vibes', cursive", transform: 'translateY(-2px)' }}
+              >
+                Angela
+              </span>
+              <span 
+                className="text-brand-accent tracking-[0.25em] text-xs font-bold uppercase"
+                style={{ fontFamily: "'Montserrat', sans-serif" }}
+              >
+                Mueblería
+              </span>
+            </div>
+            <p className="text-xs text-gray-500 leading-relaxed font-medium">
+              Diseño y fabricación de muebles a medida en Masatepe, Nicaragua. Calidad artesanal y acabados premium para tu hogar.
+            </p>
           </div>
-          <p className="text-[10px] text-gray-400">
-            © 2024 ANGELA MUEBLERÍA. TODOS LOS DERECHOS RESERVADOS.
-          </p>
+
+          {/* Column 2: Navigation Links */}
+          <div className="space-y-4">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-brand-primary">
+              Enlaces Rápidos
+            </h4>
+            <div className="flex flex-col gap-2.5 text-xs text-gray-500 font-medium">
+              <button
+                onClick={() => setCurrentPage("home")}
+                className="hover:text-brand-accent transition-colors text-left"
+              >
+                Inicio
+              </button>
+              <button
+                onClick={() => setCurrentPage("catalog")}
+                className="hover:text-brand-accent transition-colors text-left"
+              >
+                Catálogo
+              </button>
+              <button
+                onClick={() => setCurrentPage("builder")}
+                className="hover:text-brand-accent transition-colors text-left"
+              >
+                Personalizador 3D
+              </button>
+              <button
+                onClick={() => setCurrentPage("faq")}
+                className="hover:text-brand-accent transition-colors text-left"
+              >
+                Preguntas Frecuentes (FAQ)
+              </button>
+            </div>
+          </div>
+
+          {/* Column 3: Contact Info */}
+          <div className="space-y-4">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-brand-primary">
+              Contacto
+            </h4>
+            <div className="flex flex-col gap-3.5 text-xs text-gray-500 font-medium">
+              <a
+                href="https://wa.me/50587489573"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => trackFooterClick("whatsapp")}
+                className="flex items-center gap-2.5 hover:text-brand-accent transition-colors"
+              >
+                <MessageCircle size={16} className="text-green-600 shrink-0" />
+                <span>+505 8748 9573</span>
+              </a>
+              <a
+                href="https://www.facebook.com/share/1Db8EC4GYX/"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => trackFooterClick("facebook")}
+                className="flex items-center gap-2.5 hover:text-brand-accent transition-colors"
+              >
+                <Facebook size={16} className="text-blue-600 shrink-0" />
+                <span>Facebook Oficial</span>
+              </a>
+              <a
+                href="mailto:angelamuebleria29@gmail.com"
+                onClick={() => trackFooterClick("correo")}
+                className="flex items-center gap-2.5 hover:text-brand-accent transition-colors animate-in"
+              >
+                <Mail size={16} className="text-brand-accent shrink-0" />
+                <span className="break-all">angelamuebleria29@gmail.com</span>
+              </a>
+            </div>
+          </div>
+
+          {/* Column 4: Location */}
+          <div className="space-y-4">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-brand-primary">
+              Ubicación
+            </h4>
+            <a
+              href="https://www.google.com/maps/search/?api=1&query=Del+centro+de+Salud+2c+al+norte,+Masatepe,+Nicaragua"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => trackFooterClick("direccion")}
+              className="flex items-start gap-2.5 text-xs text-gray-500 font-medium hover:text-brand-accent transition-colors leading-relaxed"
+            >
+              <MapPin size={16} className="text-brand-accent shrink-0 mt-0.5" />
+              <span>Del centro de Salud 2c al norte, Masatepe, Nicaragua.</span>
+            </a>
+          </div>
+
+        </div>
+
+        {/* Bottom Bar: Copyright */}
+        <div className="max-w-7xl mx-auto pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] text-gray-400 font-medium">
+          <p>© 2026 ANGELA MUEBLERÍA. TODOS LOS DERECHOS RESERVADOS.</p>
+          <div className="flex gap-4">
+            <span className="hover:text-brand-primary transition-colors cursor-default">Términos de Servicio</span>
+            <span>•</span>
+            <span className="hover:text-brand-primary transition-colors cursor-default">Política de Privacidad</span>
+          </div>
         </div>
       </footer>
 
