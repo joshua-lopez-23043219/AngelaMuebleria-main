@@ -104,6 +104,73 @@ const CartItemPreview = ({ item, className }) => {
   );
 };
 
+const OrderStepper = ({ status }) => {
+  const steps = [
+    { label: "Recibido", key: "received" },
+    { label: "Pago", key: "payment" },
+    { label: "Fabricación", key: "production" },
+    { label: "Listo", key: "ready" },
+    { label: "Entregado", key: "delivered" }
+  ];
+
+  let activeIndex = 0;
+  if (status === "payment_review") activeIndex = 0;
+  if (status === "payment_validated") activeIndex = 1;
+  if (status === "processing") activeIndex = 2;
+  if (status === "ready") activeIndex = 3;
+  if (status === "delivered") activeIndex = 4;
+
+  if (status === "cancelled" || status === "refunded" || status === "refund_pending") {
+    return null;
+  }
+
+  return (
+    <div className="w-full py-4 border-b border-gray-100 mb-6">
+      <div className="flex items-center justify-between">
+        {steps.map((step, idx) => {
+          const isCompleted = idx <= activeIndex;
+          const isActive = idx === activeIndex;
+          return (
+            <React.Fragment key={step.key}>
+              <div className="flex flex-col items-center relative z-10 flex-1">
+                <div
+                  className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300",
+                    isCompleted 
+                      ? "bg-brand-primary text-white" 
+                      : "bg-gray-100 text-gray-400 border border-gray-200",
+                    isActive && "ring-4 ring-brand-primary/20 scale-105"
+                  )}
+                >
+                  {isCompleted ? "✓" : idx + 1}
+                </div>
+                <span 
+                  className={cn(
+                    "text-[10px] mt-1.5 font-bold tracking-tight text-center",
+                    isCompleted ? "text-brand-primary" : "text-gray-400"
+                  )}
+                >
+                  {step.label}
+                </span>
+              </div>
+
+              {idx < steps.length - 1 && (
+                <div className="flex-1 h-0.5 relative -translate-y-3 mx-[-15px]">
+                  <div className="absolute inset-0 bg-gray-100 border-t border-gray-200"></div>
+                  <div
+                    className="absolute inset-y-0 left-0 bg-brand-primary transition-all duration-500"
+                    style={{ width: idx < activeIndex ? "100%" : "0%" }}
+                  ></div>
+                </div>
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 export const OrdersList = () => {
   const ordersApi = useOrders();
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -269,6 +336,8 @@ export const OrdersList = () => {
               </div>
 
               <div className="space-y-6 max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar">
+                <OrderStepper status={selectedOrder.status} />
+
                 <div className="space-y-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
                   {loadingItems ? (
                     <div className="text-center py-12 text-gray-400 italic">

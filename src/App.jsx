@@ -127,6 +127,20 @@ export default function App() {
     }
   }, [currentPage]);
 
+  // Parse url search params for direct AR viewing from QR codes
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const arViewId = params.get("ar_view");
+    if (arViewId && prod.products.length > 0) {
+      const found = prod.products.find(p => String(p.id) === String(arViewId));
+      if (found) {
+        setSelected3dProduct(found);
+        // Clear query parameters from address bar to prevent reopening on reload
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+  }, [prod.products]);
+
   const trackFooterClick = (type) => {
     if (window.gtag) {
       window.gtag("event", `clic_${type}`);
@@ -475,7 +489,7 @@ export default function App() {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               transition={{ type: "spring", damping: 25, stiffness: 350 }}
-              className="relative bg-white w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col border border-brand-accent/10"
+              className="relative bg-white w-full max-w-5xl rounded-3xl shadow-2xl overflow-hidden flex flex-col border border-brand-accent/10"
             >
               {/* Header */}
               <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-paper/30">
@@ -501,38 +515,79 @@ export default function App() {
                 </button>
               </div>
 
-              {/* Body: Model Viewer */}
-              <div className="relative flex-1 bg-gray-50/50 flex flex-col items-center justify-center min-h-[380px] sm:min-h-[480px]">
-                {/* Embedded model-viewer */}
-                <model-viewer
-                  src={api.getImageUrl(selected3dProduct.model_3d_url)}
-                  alt={selected3dProduct.name}
-                  ar
-                  ar-modes="webxr scene-viewer quick-look"
-                  camera-controls
-                  auto-rotate
-                  shadow-intensity="1"
-                  shadow-softness="0.8"
-                  exposure="1.2"
-                  interaction-prompt="auto"
-                  style={{ width: "100%", height: "450px", outline: "none" }}
-                  className="w-full h-full"
-                >
-                  {/* Custom AR Button */}
-                  <button
-                    slot="ar-button"
-                    className="absolute bottom-4 right-4 bg-brand-primary text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg hover:bg-brand-accent transition-all flex items-center gap-2 border border-white/20 cursor-pointer"
+              {/* Body: Model Viewer & AR QR Code panel */}
+              <div className="flex flex-col md:flex-row flex-1 bg-gray-50/50">
+                {/* Left side: Embedded model-viewer */}
+                <div className="flex-1 min-h-[380px] sm:min-h-[480px] relative flex items-center justify-center">
+                  <model-viewer
+                    src={api.getImageUrl(selected3dProduct.model_3d_url)}
+                    alt={selected3dProduct.name}
+                    ar
+                    ar-modes="webxr scene-viewer quick-look"
+                    ar-scale="fixed"
+                    ar-placement="floor"
+                    camera-controls
+                    auto-rotate
+                    shadow-intensity="1"
+                    shadow-softness="0.8"
+                    exposure="1.2"
+                    interaction-prompt="auto"
+                    style={{ width: "100%", height: "450px", outline: "none" }}
+                    className="w-full h-full"
                   >
-                    <Sparkles size={14} />
-                    Ver en mi Espacio (AR)
-                  </button>
-                  
-                  {/* Loading indicator */}
-                  <div slot="poster" className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50/80 backdrop-blur-sm gap-3">
-                    <div className="w-10 h-10 border-4 border-brand-accent border-t-transparent rounded-full animate-spin"></div>
-                    <span className="text-xs font-bold text-gray-500 tracking-wider uppercase animate-pulse">Cargando Modelo 3D...</span>
+                    {/* Custom AR Button */}
+                    <button
+                      slot="ar-button"
+                      className="absolute bottom-4 right-4 bg-brand-primary text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg hover:bg-brand-accent transition-all flex items-center gap-2 border border-white/20 cursor-pointer"
+                    >
+                      <Sparkles size={14} />
+                      Ver en mi Espacio (AR)
+                    </button>
+                    
+                    {/* Loading indicator */}
+                    <div slot="poster" className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50/80 backdrop-blur-sm gap-3">
+                      <div className="w-10 h-10 border-4 border-brand-accent border-t-transparent rounded-full animate-spin"></div>
+                      <span className="text-xs font-bold text-gray-500 tracking-wider uppercase animate-pulse">Cargando Modelo 3D...</span>
+                    </div>
+                  </model-viewer>
+                </div>
+
+                {/* Right side: AR QR Code Guide (Desktop Only) */}
+                <div className="hidden md:flex w-80 border-l border-gray-150 flex-col p-6 space-y-5 bg-white shrink-0 text-left">
+                  <div>
+                    <h4 className="font-serif font-bold text-gray-800 text-sm">Realidad Aumentada (AR)</h4>
+                    <p className="text-[10px] text-gray-400 font-medium mt-0.5">Proyecta este mueble en tu habitación a tamaño real.</p>
                   </div>
-                </model-viewer>
+                  
+                  {/* QR Image Wrapper */}
+                  <div className="flex flex-col items-center justify-center p-4 bg-gray-50 border border-brand-accent/5 rounded-2xl shadow-inner">
+                    <img 
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(`https://angelamuebleria.business/?ar_view=${selected3dProduct.id}`)}`}
+                      className="w-40 h-40 bg-white p-2 border rounded-xl shadow-sm"
+                      alt="Código QR de Realidad Aumentada"
+                    />
+                    <span className="text-[9px] font-bold text-brand-accent uppercase tracking-wider mt-3">Escala 1:1 Garantizada</span>
+                  </div>
+
+                  {/* Step instructions */}
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Instrucciones:</p>
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        <span className="flex items-center justify-center w-5 h-5 bg-brand-primary/10 text-brand-primary rounded-full text-[10px] font-bold shrink-0">1</span>
+                        <p className="text-xs text-gray-600 leading-normal font-medium">Escanea el código QR con la cámara de tu teléfono móvil.</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <span className="flex items-center justify-center w-5 h-5 bg-brand-primary/10 text-brand-primary rounded-full text-[10px] font-bold shrink-0">2</span>
+                        <p className="text-xs text-gray-600 leading-normal font-medium">Abre el enlace y presiona el botón "Ver en mi Espacio (AR)".</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <span className="flex items-center justify-center w-5 h-5 bg-brand-primary/10 text-brand-primary rounded-full text-[10px] font-bold shrink-0">3</span>
+                        <p className="text-xs text-gray-600 leading-normal font-medium">Apunta al suelo y muévelo en círculos para colocar el mueble.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Footer / Controls Instruction / Add to Cart CTA */}
