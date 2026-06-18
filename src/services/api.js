@@ -276,6 +276,14 @@ export const api = {
       apiFetch("/apiPersonalizacion/ColorMaterial/", { method: "POST", body: JSON.stringify(data) }),
     deleteColor: (id) => 
       apiFetch(`/apiPersonalizacion/ColorMaterial/${id}/`, { method: "DELETE" }),
+    getColorModels: async () => {
+      const res = await apiFetch(`/apiPersonalizacion/MuebleColorModelo3D/?_t=${Date.now()}`);
+      return Array.isArray(res) ? res : (res.results || []);
+    },
+    createColorModel: (data) =>
+      apiFetch("/apiPersonalizacion/MuebleColorModelo3D/", { method: "POST", body: JSON.stringify(data) }),
+    deleteColorModel: (id) =>
+      apiFetch(`/apiPersonalizacion/MuebleColorModelo3D/${id}/`, { method: "DELETE" }),
   },
 
   marketing: {

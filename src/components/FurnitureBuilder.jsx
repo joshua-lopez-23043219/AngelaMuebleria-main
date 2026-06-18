@@ -21,6 +21,7 @@ export const FurnitureBuilder = ({ onAddToCart }) => {
   const [furnitureTypes, setFurnitureTypes] = useState([]);
   const [materials, setMaterials] = useState([]);
   const [fabrics, setFabrics] = useState([]);
+  const [colorModels, setColorModels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [savedDesigns, setSavedDesigns] = useState([]);
 
@@ -81,7 +82,7 @@ export const FurnitureBuilder = ({ onAddToCart }) => {
       price: price,
       description: desc,
       dimensions: selectedFurniture.dimensions || 'Medidas estándar',
-      image_url: selectedFurniture.image_url || selectedFurniture.image,
+      image_url: activeColorModel ? activeColorModel.model_3d_url : (selectedFurniture.image_url || selectedFurniture.image),
       stock: 99,
       category: "Personalizado",
       wood_hex: activeWood?.hex_code || null,
@@ -99,6 +100,12 @@ export const FurnitureBuilder = ({ onAddToCart }) => {
   const applyColors = () => {
     const modelViewer = modelRef.current;
     if (!modelViewer || !modelViewer.model) return;
+
+    // Si hay un modelo específico para este color, no aplicamos tintes procedimentales
+    const hasCustomColorModel = colorModels.some(
+      m => m.mueble_base === selectedFurniture?.id && m.color === material
+    );
+    if (hasCustomColorModel) return;
 
     const activeWood = materials.find(m => m.id === material);
     const activeFabric = fabrics.find(f => f.id === fabric);
@@ -190,6 +197,7 @@ export const FurnitureBuilder = ({ onAddToCart }) => {
       try {
         const f = await api.customizations.getFurnitures();
         const colors = await api.customizations.getColors();
+        const models = await api.customizations.getColorModels();
         setFurnitureTypes(f);
         
         const woods = colors.filter(c => c.type === 'paint');
@@ -197,6 +205,7 @@ export const FurnitureBuilder = ({ onAddToCart }) => {
         
         setMaterials(woods);
         setFabrics(fabs);
+        setColorModels(models);
         
         // No seleccionar colores por defecto automáticamente
       } catch (e) {
@@ -340,6 +349,10 @@ export const FurnitureBuilder = ({ onAddToCart }) => {
     );
   }
 
+  const activeColorModel = colorModels.find(
+    m => m.mueble_base === selectedFurniture?.id && m.color === material
+  );
+
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-12">
       <header className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 border-b border-brand-accent/5 pb-6">
@@ -390,9 +403,9 @@ export const FurnitureBuilder = ({ onAddToCart }) => {
 
           {selectedFurniture.image_url?.endsWith('.glb') ? (
             <model-viewer
-              key={selectedFurniture.id + "_" + (material ? "custom" : "original")}
+              key={selectedFurniture.id + "_" + (activeColorModel ? `colormodel_${activeColorModel.id}` : "base") + "_" + material}
               ref={modelRef}
-              src={api.getImageUrl(selectedFurniture.image_url)}
+              src={activeColorModel ? api.getImageUrl(activeColorModel.model_3d_url) : api.getImageUrl(selectedFurniture.image_url)}
               alt={selectedFurniture.name}
               camera-controls
               auto-rotate

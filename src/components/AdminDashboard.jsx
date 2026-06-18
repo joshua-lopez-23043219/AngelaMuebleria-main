@@ -146,6 +146,7 @@ export const AdminDashboard = () => {
   const [customFurnitures, setCustomFurnitures] = useState([]);
   const [editingFurniture, setEditingFurniture] = useState(null);
   const [customColors, setCustomColors] = useState([]);
+  const [customColorModels, setCustomColorModels] = useState([]);
   const [shippingCosts, setShippingCosts] = useState({});
 
   const [activeTab, setActiveTab] = useState("dashboard"); // "dashboard" | "pedidos" | "combos" | "email" | "analytics" | "usuarios"
@@ -524,6 +525,7 @@ export const AdminDashboard = () => {
     try {
       setCustomFurnitures(await api.customizations.getFurnitures());
       setCustomColors(await api.customizations.getColors());
+      setCustomColorModels(await api.customizations.getColorModels());
     } catch(e) { console.error("Error loading customizations:", e); }
   };
 
@@ -1063,6 +1065,137 @@ export const AdminDashboard = () => {
                 </div>
               </section>
             </div>
+
+            {/* Modelos 3D por Color Section */}
+            <section className="space-y-6 mt-12 animate-in fade-in slide-in-from-bottom-4">
+              <h2 className="text-2xl font-serif font-bold border-b pb-2">
+                Asociación de Modelos 3D por Color
+              </h2>
+              <div className="bg-white rounded-2xl border border-brand-accent/10 p-6 shadow-sm">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {/* Form */}
+                  <div className="lg:col-span-1 space-y-4">
+                    <h3 className="text-base font-bold text-gray-700 border-b pb-2">Vincular Modelo a Color</h3>
+                    <form onSubmit={async (e) => {
+                      e.preventDefault();
+                      const formData = new FormData(e.target);
+                      const muebleId = formData.get("mueble_base");
+                      const colorId = formData.get("color");
+                      const file = formData.get("model_file");
+                      
+                      if (!muebleId || !colorId) {
+                        alert("Por favor seleccione un mueble base y un color.");
+                        return;
+                      }
+                      if (!file || file.size === 0) {
+                        alert("Por favor suba un archivo de modelo 3D (.glb).");
+                        return;
+                      }
+
+                      try {
+                        // 1. Upload model file
+                        const uploadRes = await api.upload(file, 'model_3d');
+                        // 2. Create association
+                        await api.customizations.createColorModel({
+                          mueble_base: Number(muebleId),
+                          color: Number(colorId),
+                          model_3d_url: uploadRes.url
+                        });
+                        alert("Modelo asociado exitosamente.");
+                        e.target.reset();
+                        loadCustomizations();
+                      } catch (err) {
+                        alert("Error al asociar modelo: " + err.message);
+                      }
+                    }} className="flex flex-col gap-3 border p-4 rounded-xl bg-paper/30">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] uppercase font-bold text-gray-500">Mueble Base</label>
+                        <select required name="mueble_base" className="px-3 py-2 border rounded-lg text-sm bg-white">
+                          <option value="">Seleccione un mueble...</option>
+                          {customFurnitures.map(f => (
+                            <option key={f.id} value={f.id}>{f.name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] uppercase font-bold text-gray-500">Color / Material</label>
+                        <select required name="color" className="px-3 py-2 border rounded-lg text-sm bg-white">
+                          <option value="">Seleccione un color...</option>
+                          {customColors.map(c => (
+                            <option key={c.id} value={c.id}>{c.name} ({c.type === 'paint' ? 'Pintura' : 'Tela'})</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] uppercase font-bold text-gray-500">Modelo 3D (.glb)</label>
+                        <input required type="file" name="model_file" accept=".glb" className="px-3 py-1.5 border rounded-lg text-sm bg-white" />
+                      </div>
+
+                      <button type="submit" className="py-2.5 mt-2 bg-brand-primary text-white rounded-lg text-sm font-bold hover:bg-brand-accent transition-colors">
+                        Asociar y Subir Modelo
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* List / Table */}
+                  <div className="lg:col-span-2 space-y-4">
+                    <h3 className="text-base font-bold text-gray-700 border-b pb-2">Modelos por Color Vinculados</h3>
+                    {customColorModels.length === 0 ? (
+                      <div className="p-8 text-center border border-dashed rounded-xl text-gray-400 font-serif italic bg-paper/10">
+                        No hay modelos específicos por color registrados aún.
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto border rounded-xl bg-white max-h-[360px] overflow-y-auto">
+                        <table className="min-w-full divide-y divide-gray-200 text-left text-xs">
+                          <thead className="bg-paper sticky top-0">
+                            <tr>
+                              <th className="px-4 py-3 font-bold uppercase text-gray-500">Mueble Base</th>
+                              <th className="px-4 py-3 font-bold uppercase text-gray-500">Color</th>
+                              <th className="px-4 py-3 font-bold uppercase text-gray-500">Modelo 3D (.glb)</th>
+                              <th className="px-4 py-3 font-bold uppercase text-gray-500">Acciones</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-200">
+                            {customColorModels.map(m => (
+                              <tr key={m.id} className="hover:bg-paper/20">
+                                <td className="px-4 py-3 font-semibold text-gray-800">{m.mueble_base_name}</td>
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-3 h-3 rounded-full border shadow-sm" style={{ backgroundColor: m.color_hex }} />
+                                    <span>{m.color_name}</span>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 font-mono text-[10px] text-gray-500 truncate max-w-xs" title={m.model_3d_url}>
+                                  <a href={api.getImageUrl(m.model_3d_url)} target="_blank" rel="noopener noreferrer" className="text-brand-accent font-bold hover:underline">
+                                    Ver archivo .glb
+                                  </a>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <button onClick={async () => {
+                                    if (confirm("¿Estás seguro de que deseas eliminar esta asociación de color y modelo 3D?")) {
+                                      try {
+                                        await api.customizations.deleteColorModel(m.id);
+                                        loadCustomizations();
+                                      } catch (err) {
+                                        alert("Error al eliminar: " + err.message);
+                                      }
+                                    }
+                                  }} className="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded transition-colors">
+                                    <Trash2 size={16} />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </section>
           </>
         )}
 
