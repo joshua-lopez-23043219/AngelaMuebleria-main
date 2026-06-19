@@ -71,6 +71,9 @@ const apiFetch = async (endpoint, options = {}) => {
 
     throw new Error(errorMsg);
   }
+  if (res.status === 204) {
+    return null;
+  }
   return res.json();
 };
 
